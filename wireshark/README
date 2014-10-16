@@ -1,0 +1,7 @@
+Wireshark packet dissector for pscdrv protocol.
+
+pscproto.lua is the generic dissector.
+pscsimproto.lua is an example of specializing dissection
+of certain messages.
+
+wireshark -Xlua_script:ps.lua pscsimdata.cap
