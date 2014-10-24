@@ -22,6 +22,8 @@ It is up to the engineer to assign meaning to these messages.
 The PSC driver provides the means to extract and assemble messages
 to/from values in EPICS records (scalar and array).
 
+Source: http://github.com/mdavidsaver/pscdrv
+
 Contents:
 
 .. toctree::
