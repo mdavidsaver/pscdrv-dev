@@ -1,45 +1,45 @@
-/*************************************************************************\
-* Copyright (c) 2014 Brookhaven Science Assoc. as operator of
-      Brookhaven National Laboratory.
-* EPICS BASE is distributed subject to a Software License Agreement found
-* in file LICENSE that is included with this distribution.
-\*************************************************************************/
-
 #ifndef PSCSERVER_H
 #define PSCSERVER_H
 
-#define PSCPORT 3000
+#include <inttypes.h>
+#include <stdarg.h>
 
-#define PSCMAXCLIENTS 5
+#include <lwip/sockets.h>
 
-#define PSCHIGHESTBLOCKID 10
-#define PSCLONGESTBUFFER 1024
+#if !LWIP_SOCKET
+# error LWIP Sockets required
+#endif
+#if NO_SYS
+# error LWIP NO_SYS not supported
+#endif
 
-/* LWIP thread stack size */
-#define PSCTHRSTACK 0
+typedef struct psc_key psc_key;
+typedef struct psc_client psc_client;
 
-/* LWIP thread priority */
-#define PSCTHRPRIO 0
+typedef enum {
+  PSC_CONN, PSC_DIS
+} psc_event;
 
-typedef struct psc_server psc_server;
+/* Called when a client (dis)connects */
+typedef void (*psc_conn)(void *pvt, psc_event evt, psc_client *ckey);
+/* Called when a message is received */
+typedef void (*psc_recv)(void *pvt, uint16_t msgid, uint32_t msglen, void *msg);
 
-typedef void (*psc_block_fn)(void *, unsigned short, char *, unsigned long);
+typedef struct {
+    void *pvt;
+    unsigned short port;
+    psc_conn conn;
+    psc_recv recv;
 
-psc_server* psc_create_server(void);
-void psc_run_server(psc_server *PSC);
-void psc_free_server(psc_server *PSC);
+    int client_prio; /* eg. DEFAULT_THREAD_PRIO */
+} psc_config;
 
-int psc_set_recv_block(psc_server *PSC,
-                       unsigned short id,
-                       unsigned int maxlen,
-                       psc_block_fn fn,
-                       void *arg);
+void psc_run(psc_key **key, const psc_config *config);
 
-int psc_send_block(psc_server *PSC,
-                   unsigned short id,
-                   void *buf,
-                   unsigned int len);
+void psc_send(psc_key *key, uint16_t msgid, uint32_t msglen, void *msg);
+void psc_send_one(psc_client *key, uint16_t msgid, uint32_t msglen, void *msg);
 
-
+void psc_error(psc_key *key, int code, const char *fmt, ...) __attribute__((format(printf,3,4)));
+void psc_verror(psc_key *key, int code, const char *fmt, va_list args);
 
 #endif // PSCSERVER_H

@@ -25,6 +25,11 @@ TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
 ## If LIBEVENT is not defined, then the system version is used (eg. /usr/lib)
 #LIBEVENT=/path/to/libevent2
 
+## (Optional) Source from the lwip and lwip-contrib release/repositories
+## If defined, then the targetApp examples will be built for Linux
+#LWIP=/home/mdavidsaver/source/lwip
+#LWIP_CONTRIB=/home/mdavidsaver/source/lwip-contrib
+
 # EPICS_BASE usually appears last so other apps can override stuff:
 EPICS_BASE=/usr/lib/epics
 
