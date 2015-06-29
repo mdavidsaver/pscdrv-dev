@@ -11,8 +11,6 @@ endef
 $(foreach dir, $(filter-out configure,$(DIRS)),$(eval $(call DIR_template,$(dir))))
 
 iocBoot_DEPEND_DIRS += $(filter %App,$(DIRS))
-pscApp_DEPEND_DIRS += coreApp
-pscApp_DEPEND_DIRS += waveANLApp
 testApp_DEPEND_DIRS += coreApp
 
 include $(TOP)/configure/RULES_TOP
