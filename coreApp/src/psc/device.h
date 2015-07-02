@@ -29,6 +29,12 @@
 
 #include "cblist.h"
 
+extern "C" {
+extern int PSCDebug;
+extern int PSCInactivityTime;
+extern int PSCMaxSendBuffer;
+}
+
 class recAlarm : public std::exception
 {
 public:
@@ -101,13 +107,6 @@ protected:
     epicsUInt32 ukncount; // RX counter for unknown blocks
     epicsUInt32 conncount; // # of successful connections
 
-    // RX message decoding
-    bool have_head;
-    epicsUInt16 header;
-    epicsUInt32 bodylen;
-    Block *bodyblock;
-    size_t expect;
-
     evbuffer *sendbuf;
 
     block_map send_blocks, recv_blocks;
@@ -141,7 +140,7 @@ public:
     std::string message;
     IOSCANPVT scan;
 
-    void report(int lvl);
+    virtual void report(int lvl)=0;
 protected:
     typedef std::map<std::string, PSCBase*> pscmap_t;
     static pscmap_t pscmap;
@@ -186,7 +185,16 @@ public:
 
     virtual void flushSend();
     virtual void forceReConnect();
+
+    virtual void report(int lvl);
 private:
+
+    // RX message decoding
+    bool have_head;
+    epicsUInt16 header;
+    epicsUInt32 bodylen;
+    Block *bodyblock;
+    size_t expect;
 
     void sendblock(Block*);
 

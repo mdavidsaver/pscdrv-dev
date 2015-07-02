@@ -16,66 +16,15 @@
 #include <errlog.h>
 #include <epicsExit.h>
 #include <dbAccess.h>
-#include <initHooks.h>
-#include <drvSup.h>
 
 #include <event2/buffer.h>
 #include <event2/util.h>
-#include <event2/thread.h>
 
 #define HEADER_SIZE 8
 /* The minimum high-water mark for the receive buffer.
  * Optimization to buffer lots of small messages.
  */
 static const size_t min_max_buf_size = 1024*1024;
-
-extern "C" int PSCDebug;
-int PSCDebug = 1;
-extern "C" int PSCInactivityTime;
-int PSCInactivityTime = 5;
-extern "C" int PSCMaxSendBuffer;
-int PSCMaxSendBuffer = 1024 * 1024;
-
-PSCBase::pscmap_t PSCBase::pscmap;
-
-Block::Block(PSCBase *p, epicsUInt16 c)
-    :psc(*p)
-    ,code(c)
-    ,data()
-    ,queued(false)
-    ,scan()
-{
-    scanIoInit(&scan);
-}
-
-
-PSCBase::PSCBase(const std::string &name,
-                 const std::string &host,
-                 unsigned short port,
-                 unsigned int timeoutmask)
-    :name(name)
-    ,host(host)
-    ,port(port)
-    ,mask(timeoutmask)
-    ,session(NULL)
-    ,connected(false)
-    ,ukncount(0)
-    ,conncount(0)
-    ,have_head(false)
-    ,header(0)
-    ,bodylen(0)
-    ,bodyblock(NULL)
-    ,expect(HEADER_SIZE)
-    ,sendbuf(evbuffer_new())
-    ,message("Initialize")
-{
-
-}
-
-PSCBase::~PSCBase()
-{
-    evbuffer_free(sendbuf);
-}
 
 
 PSC::PSC(const std::string &name,
@@ -84,6 +33,11 @@ PSC::PSC(const std::string &name,
          unsigned int timeoutmask)
     :PSCBase(name, host, port, mask)
     ,timer_active(false)
+    ,have_head(false)
+    ,header(0)
+    ,bodylen(0)
+    ,bodyblock(NULL)
+    ,expect(HEADER_SIZE)
 {
     base = EventBase::makeBase();
     event_base *eb = base->get();
@@ -103,45 +57,6 @@ PSC::PSC(const std::string &name,
 
 PSC::~PSC()
 {
-}
-
-
-Block* PSCBase::getSend(epicsUInt16 block)
-{
-    block_map::const_iterator it = send_blocks.find(block);
-    if(it!=send_blocks.end())
-        return it->second;
-    std::auto_ptr<Block> ret(new Block(this, block));
-    send_blocks[block] = ret.get();
-    return ret.release();
-}
-
-Block* PSCBase::getRecv(epicsUInt16 block)
-{
-    block_map::const_iterator it = recv_blocks.find(block);
-    if(it!=recv_blocks.end())
-        return it->second;
-    std::auto_ptr<Block> ret(new Block(this, block));
-    recv_blocks[block] = ret.get();
-    return ret.release();
-}
-
-/* queue the requested register block */
-void PSCBase::send(epicsUInt16 bid)
-{
-    block_map::const_iterator it = send_blocks.find(bid);
-    if(it==send_blocks.end())
-        return;
-    Block *block = it->second;
-
-    queueSend(block, &block->data[0], block->data.size());
-}
-
-/* add a new message to the send queue */
-void PSCBase::queueSend(epicsUInt16 id, const void* buf, epicsUInt32 buflen)
-{
-    Block *blk = getSend(id);
-    queueSend(blk, buf, buflen);
 }
 
 void PSC::queueSend(Block* blk, const void* buf, epicsUInt32 buflen)
@@ -453,79 +368,6 @@ void PSC::recvdata()
                              expect >= min_max_buf_size ? expect+1 : min_max_buf_size);
 }
 
-PSCUDP::PSCUDP(const std::string &name,
-               const std::string &host,
-               unsigned short port,
-               unsigned int timeoutmask)
-    :PSCBase(name, host, port, mask)
-{}
-
-PSCUDP::~PSCUDP() {}
-
-void PSCUDP::senddata(short evt)
-{}
-
-void PSCUDP::recvdata(short evt)
-{}
-
-void PSCUDP::flushSend() {}
-void PSCUDP::queueSend(Block *, const void *, epicsUInt32) {}
-void PSCUDP::forceReConnect() {}
-
-void PSCBase::startAll()
-{
-    pscmap_t::const_iterator it, end=pscmap.end();
-    for(it=pscmap.begin(); it!=end; ++it) {
-        Guard g(it->second->lock);
-        it->second->connect();
-    }
-}
-
-PSCBase *PSCBase::getPSCBase(const std::string& name)
-{
-    pscmap_t::const_iterator it=pscmap.find(name);
-    if(it==pscmap.end())
-        return NULL;
-    return it->second;
-}
-
-
-extern "C"
-void createPSC(const char* name, const char* host, int port, int timeout)
-{
-    try{
-        new PSC(name, host, port, timeout);
-    }catch(std::exception& e){
-        timefprintf(stderr, "Failed to create PSC '%s': %s\n", name, e.what());
-    }
-}
-
-extern "C"
-void setPSCSendBlockSize(const char* name, int bid, int size)
-{
-    try {
-        PSCBase *psc = PSCBase::getPSCBase(name);
-        if(!psc)
-            throw std::runtime_error("Unknown PSC");
-        Block *block = psc->getSend(bid);
-        if(!block)
-            throw std::runtime_error("Can't select PSC Block");
-        block->data.resize(size, 0);
-        timefprintf(stderr, "Set PSC '%s' send block %d size to %lu bytes\n",
-                name, bid, (unsigned long)block->data.size());
-    }catch(std::exception& e){
-        timefprintf(stderr, "Failed to set PSC '%s' send block %d size to %d bytes: %s\n",
-                name, bid, size, e.what());
-    }
-}
-
-static void PSCHook(initHookState state)
-{
-    if(state!=initHookAfterIocRunning)
-        return;
-    PSC::startAll();
-}
-
 static
 bool pscreportblock(int lvl, Block* block)
 {
@@ -536,7 +378,7 @@ bool pscreportblock(int lvl, Block* block)
     return true;
 }
 
-void PSCBase::report(int lvl)
+void PSC::report(int lvl)
 {
     printf("PSC %s : %s:%d\n", name.c_str(), host.c_str(), port);
     if(lvl<=0)
@@ -572,76 +414,3 @@ void PSCBase::report(int lvl)
     }
 }
 
-static
-bool pscreportone(int lvl, PSCBase* psc)
-{
-    psc->report(lvl);
-    return true;
-}
-
-static
-long pscreport(int level)
-{
-    PSCBase::visit(pscreportone, level);
-    return 0;
-}
-
-#include <iocsh.h>
-
-static const iocshArg createPSCArg0 = {"name", iocshArgString};
-static const iocshArg createPSCArg1 = {"hostname", iocshArgString};
-static const iocshArg createPSCArg2 = {"port#", iocshArgInt};
-static const iocshArg createPSCArg3 = {"enable recv timeout", iocshArgInt};
-static const iocshArg * const createPSCArgs[] =
-{&createPSCArg0,&createPSCArg1,&createPSCArg2,&createPSCArg3};
-static const iocshFuncDef createPSCDef = {"createPSC", 4, createPSCArgs};
-static void createPSCArgsCallFunc(const iocshArgBuf *args)
-{
-    createPSC(args[0].sval, args[1].sval, args[2].ival, args[3].ival);
-}
-
-static const iocshArg setPSCArg0 = {"name", iocshArgString};
-static const iocshArg setPSCArg1 = {"block", iocshArgInt};
-static const iocshArg setPSCArg2 = {"size", iocshArgInt};
-static const iocshArg * const setPSCArgs[] = {&setPSCArg0,&setPSCArg1,&setPSCArg2};
-static const iocshFuncDef setPSCDef = {"setPSCSendBlockSize", 3, setPSCArgs};
-static void setPSCCallFunc(const iocshArgBuf *args)
-{
-    setPSCSendBlockSize(args[0].sval, args[1].ival, args[2].ival);
-}
-
-static void PSCRegister(void)
-{
-    int ret =
-#if defined(WIN32)
-        evthread_use_windows_threads();
-#elif defined(_EVENT_HAVE_PTHREADS)
-        evthread_use_pthreads();
-#else
-        1;
-#error libevent threading not support for this target
-#endif
-    if(ret!=0) {
-        timefprintf(stderr, "Failed to initialize libevent threading!.  PSC driver not loaded.\n");
-        return;
-    }
-    iocshRegister(&createPSCDef, &createPSCArgsCallFunc);
-    iocshRegister(&setPSCDef, &setPSCCallFunc);
-    initHookRegister(&PSCHook);
-}
-
-static
-drvet drvPSC = {
-    2,
-    (DRVSUPFUN)pscreport,
-    NULL
-};
-
-#include <epicsExport.h>
-extern "C" {
-epicsExportAddress(int, PSCDebug);
-epicsExportAddress(int, PSCMaxSendBuffer);
-epicsExportAddress(int, PSCInactivityTime);
-epicsExportAddress(drvet, drvPSC);
-epicsExportRegistrar(PSCRegister);
-}

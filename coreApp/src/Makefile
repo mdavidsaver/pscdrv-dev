@@ -10,7 +10,9 @@ LIBRARY_IOC = pscCore
 DBD += pscCore.dbd
 
 pscCore_SRCS += evbase.cpp
+pscCore_SRCS += pscbase.cpp
 pscCore_SRCS += psc.cpp
+pscCore_SRCS += pscudp.cpp
 pscCore_SRCS += pscwrap.cpp
 pscCore_SRCS += util.c
 pscCore_SRCS += devcommon.cpp
