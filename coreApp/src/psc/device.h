@@ -205,4 +205,35 @@ private:
     static void ioc_atexit(void*);
 };
 
+class PSCUDP : public PSCBase
+{
+public:
+    PSCUDP(const std::string& name,
+           const std::string& host,
+           unsigned short port,
+           unsigned int timeoutmask);
+    virtual ~PSCUDP();
+
+    virtual void queueSend(Block*, const void*, epicsUInt32);
+
+    virtual void flushSend();
+    virtual void forceReConnect();
+
+private:
+    sockaddr_in ep;
+
+    int socket;
+    event *evt_rx, *evt_tx;
+
+    typedef std::vector<char> buffer_t;
+    std::list<buffer_t> txqueue;
+    buffer_t rxscratch;
+
+    void senddata(short evt);
+    void recvdata(short evt);
+
+    static void ev_send(int,short,void*);
+    static void ev_recv(int,short,void*);
+};
+
 #endif // PSC_H

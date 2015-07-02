@@ -44,6 +44,24 @@ void PSC::bev_reconnect(int, short, void *raw)
     }CATCH(eventcb)
 }
 
+void PSCUDP::ev_send(int, short evt, void *raw)
+{
+    PSCUDP *psc=(PSCUDP*)raw;
+    try{
+        Guard g(psc->lock);
+        psc->senddata(evt);
+    }CATCH(eventcb)
+}
+
+void PSCUDP::ev_recv(int, short evt, void *raw)
+{
+    PSCUDP *psc=(PSCUDP*)raw;
+    try{
+        Guard g(psc->lock);
+        psc->recvdata(evt);
+    }CATCH(eventcb)
+}
+
 void PSC::ioc_atexit(void *raw)
 {
     PSC *psc=(PSC*)raw;

@@ -453,6 +453,25 @@ void PSC::recvdata()
                              expect >= min_max_buf_size ? expect+1 : min_max_buf_size);
 }
 
+PSCUDP::PSCUDP(const std::string &name,
+               const std::string &host,
+               unsigned short port,
+               unsigned int timeoutmask)
+    :PSCBase(name, host, port, mask)
+{}
+
+PSCUDP::~PSCUDP() {}
+
+void PSCUDP::senddata(short evt)
+{}
+
+void PSCUDP::recvdata(short evt)
+{}
+
+void PSCUDP::flushSend() {}
+void PSCUDP::queueSend(Block *, const void *, epicsUInt32) {}
+void PSCUDP::forceReConnect() {}
+
 void PSCBase::startAll()
 {
     pscmap_t::const_iterator it, end=pscmap.end();
