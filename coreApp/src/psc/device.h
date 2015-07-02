@@ -76,9 +76,6 @@ struct Block
     epicsTime rxtime; // RX timestamp
 
     Block(PSC*, epicsUInt16);
-
-    void queue();
-    void notify();
 };
 
 // User code must lock PSC::lock before
