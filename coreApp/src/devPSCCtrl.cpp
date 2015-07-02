@@ -39,7 +39,7 @@ namespace {
 long init_common(dbCommon* prec, const char*link)
 {
     try {
-        PSC *psc = PSC::getPSC(link);
+        PSCBase *psc = PSCBase::getPSCBase(link);
         if(!psc) {
             timefprintf(stderr, "%s: can't find PSC '%s'", prec->name, link);
         }
@@ -72,7 +72,7 @@ long init_count(longinRecord* prec)
         strm >> pscname >> blocknum >> direction;
         if(strm.fail())
             throw std::runtime_error("Failed to parse INP");
-        PSC *psc = PSC::getPSC(pscname);
+        PSCBase *psc = PSCBase::getPSCBase(pscname);
         if(!psc)
             throw std::runtime_error("Can't find PSC");
         Block *block=NULL;

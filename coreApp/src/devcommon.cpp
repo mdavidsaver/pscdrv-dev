@@ -32,7 +32,7 @@ void parse_link(Priv* priv, const char* link, int direction)
                 priv->prec->name, strm.str().substr(strm.tellg()).c_str());
     }
 
-    priv->psc = PSC::getPSC(name);
+    priv->psc = PSC::getPSCBase(name);
     if(!priv->psc) {
         timefprintf(stderr, "%s: PSC '%s' not found\n",
                 priv->prec->name, name.c_str());

@@ -8,7 +8,7 @@
 #ifndef DEVCOMMON_H
 #define DEVCOMMON_H
 
-#include "psc/device.h"
+#include "device.h"
 
 #include <cstdio>
 #include <cstring>
@@ -61,7 +61,7 @@ static dset6<REC ## Record> NAME = {{6, NULL, NULL, (INIT_REC), (IOINTR)}, (READ
 struct Priv
 {
     dbCommon *prec;
-    PSC *psc;
+    PSCBase *psc;
     epicsUInt16 bid;
     Block *block;
     unsigned long offset;

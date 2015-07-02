@@ -36,9 +36,9 @@ int PSCInactivityTime = 5;
 extern "C" int PSCMaxSendBuffer;
 int PSCMaxSendBuffer = 1024 * 1024;
 
-PSC::pscmap_t PSC::pscmap;
+PSCBase::pscmap_t PSCBase::pscmap;
 
-Block::Block(PSC *p, epicsUInt16 c)
+Block::Block(PSCBase *p, epicsUInt16 c)
     :psc(*p)
     ,code(c)
     ,data()
@@ -49,15 +49,14 @@ Block::Block(PSC *p, epicsUInt16 c)
 }
 
 
-PSC::PSC(const std::string &name,
-         const std::string &host,
-         unsigned short port,
-         unsigned int timeoutmask)
+PSCBase::PSCBase(const std::string &name,
+                 const std::string &host,
+                 unsigned short port,
+                 unsigned int timeoutmask)
     :name(name)
     ,host(host)
     ,port(port)
     ,mask(timeoutmask)
-    ,timer_active(false)
     ,session(NULL)
     ,connected(false)
     ,ukncount(0)
@@ -69,6 +68,22 @@ PSC::PSC(const std::string &name,
     ,expect(HEADER_SIZE)
     ,sendbuf(evbuffer_new())
     ,message("Initialize")
+{
+
+}
+
+PSCBase::~PSCBase()
+{
+    evbuffer_free(sendbuf);
+}
+
+
+PSC::PSC(const std::string &name,
+         const std::string &host,
+         unsigned short port,
+         unsigned int timeoutmask)
+    :PSCBase(name, host, port, mask)
+    ,timer_active(false)
 {
     base = EventBase::makeBase();
     event_base *eb = base->get();
@@ -91,7 +106,7 @@ PSC::~PSC()
 }
 
 
-Block* PSC::getSend(epicsUInt16 block)
+Block* PSCBase::getSend(epicsUInt16 block)
 {
     block_map::const_iterator it = send_blocks.find(block);
     if(it!=send_blocks.end())
@@ -101,7 +116,7 @@ Block* PSC::getSend(epicsUInt16 block)
     return ret.release();
 }
 
-Block* PSC::getRecv(epicsUInt16 block)
+Block* PSCBase::getRecv(epicsUInt16 block)
 {
     block_map::const_iterator it = recv_blocks.find(block);
     if(it!=recv_blocks.end())
@@ -112,7 +127,7 @@ Block* PSC::getRecv(epicsUInt16 block)
 }
 
 /* queue the requested register block */
-void PSC::send(epicsUInt16 bid)
+void PSCBase::send(epicsUInt16 bid)
 {
     block_map::const_iterator it = send_blocks.find(bid);
     if(it==send_blocks.end())
@@ -123,7 +138,7 @@ void PSC::send(epicsUInt16 bid)
 }
 
 /* add a new message to the send queue */
-void PSC::queueSend(epicsUInt16 id, const void* buf, epicsUInt32 buflen)
+void PSCBase::queueSend(epicsUInt16 id, const void* buf, epicsUInt32 buflen)
 {
     Block *blk = getSend(id);
     queueSend(blk, buf, buflen);
@@ -438,7 +453,7 @@ void PSC::recvdata()
                              expect >= min_max_buf_size ? expect+1 : min_max_buf_size);
 }
 
-void PSC::startAll()
+void PSCBase::startAll()
 {
     pscmap_t::const_iterator it, end=pscmap.end();
     for(it=pscmap.begin(); it!=end; ++it) {
@@ -447,7 +462,7 @@ void PSC::startAll()
     }
 }
 
-PSC* PSC::getPSC(const std::string& name)
+PSCBase *PSCBase::getPSCBase(const std::string& name)
 {
     pscmap_t::const_iterator it=pscmap.find(name);
     if(it==pscmap.end())
@@ -470,7 +485,7 @@ extern "C"
 void setPSCSendBlockSize(const char* name, int bid, int size)
 {
     try {
-        PSC *psc = PSC::getPSC(name);
+        PSCBase *psc = PSCBase::getPSCBase(name);
         if(!psc)
             throw std::runtime_error("Unknown PSC");
         Block *block = psc->getSend(bid);
@@ -502,7 +517,7 @@ bool pscreportblock(int lvl, Block* block)
     return true;
 }
 
-void PSC::report(int lvl)
+void PSCBase::report(int lvl)
 {
     printf("PSC %s : %s:%d\n", name.c_str(), host.c_str(), port);
     if(lvl<=0)
@@ -539,7 +554,7 @@ void PSC::report(int lvl)
 }
 
 static
-bool pscreportone(int lvl, PSC* psc)
+bool pscreportone(int lvl, PSCBase* psc)
 {
     psc->report(lvl);
     return true;
@@ -548,7 +563,7 @@ bool pscreportone(int lvl, PSC* psc)
 static
 long pscreport(int level)
 {
-    PSC::visit(pscreportone, level);
+    PSCBase::visit(pscreportone, level);
     return 0;
 }
 

@@ -56,11 +56,11 @@ public:
 };
 
 class dbCommon;
-class PSC;
+class PSCBase;
 
 struct Block
 {
-    PSC& psc;
+    PSCBase& psc;
     const epicsUInt16 code;
 
     typedef std::vector<char> data_t;
@@ -75,12 +75,12 @@ struct Block
 
     epicsTime rxtime; // RX timestamp
 
-    Block(PSC*, epicsUInt16);
+    Block(PSCBase*, epicsUInt16);
 };
 
-// User code must lock PSC::lock before
+// User code must lock PSCBase::lock before
 // any access to methods or other members.
-class PSC
+class PSCBase
 {
 public:
     const std::string name;
@@ -88,12 +88,11 @@ public:
     const unsigned short port;
 
     typedef std::map<epicsUInt16, Block*> block_map;
-private:
+
+protected:
     unsigned int mask;
 
     EventBase::pointer base;
-    event *reconnect_timer;
-    bool timer_active;
     evdns_base *dns;
     bufferevent *session;
 
@@ -114,11 +113,11 @@ private:
     block_map send_blocks, recv_blocks;
 
 public:
-    PSC(const std::string& name,
+    PSCBase(const std::string& name,
         const std::string& host,
         unsigned short port,
         unsigned int timeoutmask);
-    virtual ~PSC();
+    virtual ~PSCBase();
 
     mutable epicsMutex lock;
 
@@ -127,10 +126,11 @@ public:
 
     void send(epicsUInt16);
     void queueSend(epicsUInt16, const void*, epicsUInt32);
-    void queueSend(Block*, const void*, epicsUInt32);
+    virtual void queueSend(Block*, const void*, epicsUInt32)=0;
 
-    void flushSend();
-    void forceReConnect();
+    virtual void connect()=0;
+    virtual void flushSend()=0;
+    virtual void forceReConnect()=0;
 
     inline bool isConnected() const{return connected;}
     inline std::string lastMessage() const{return message;}
@@ -142,6 +142,50 @@ public:
     IOSCANPVT scan;
 
     void report(int lvl);
+protected:
+    typedef std::map<std::string, PSCBase*> pscmap_t;
+    static pscmap_t pscmap;
+
+public:
+    static void startAll();
+    static PSCBase* getPSCBase(const std::string&);
+    template<typename T>
+    static T* getPSC(const std::string& n)
+    {
+        PSCBase* b = getPSCBase(n);
+        if(!b) return 0;
+        else return dynamic_cast<T*>(b);
+    }
+
+    template<typename FN, typename ARG>
+    static bool visit(FN fn, ARG arg) {
+        bool val = true;
+        pscmap_t::const_iterator it, end = pscmap.end();
+        for(it=pscmap.begin(); it!=end; ++it) {
+            val = fn(arg, it->second);
+            if(!val) break;
+        }
+        return val;
+    }
+};
+
+class PSC : public PSCBase
+{
+
+    event *reconnect_timer;
+    bool timer_active;
+
+public:
+    PSC(const std::string& name,
+        const std::string& host,
+        unsigned short port,
+        unsigned int timeoutmask);
+    virtual ~PSC();
+
+    virtual void queueSend(Block*, const void*, epicsUInt32);
+
+    virtual void flushSend();
+    virtual void forceReConnect();
 private:
 
     void sendblock(Block*);
@@ -159,23 +203,6 @@ private:
     static void bev_datacb(bufferevent*, void*);
     static void bev_reconnect(int,short,void*);
     static void ioc_atexit(void*);
-
-    typedef std::map<std::string, PSC*> pscmap_t;
-    static pscmap_t pscmap;
-
-public:
-    static void startAll();
-    static PSC* getPSC(const std::string&);
-    template<typename FN, typename ARG>
-    static bool visit(FN fn, ARG arg) {
-        bool val = true;
-        pscmap_t::const_iterator it, end = pscmap.end();
-        for(it=pscmap.begin(); it!=end; ++it) {
-            val = fn(arg, it->second);
-            if(!val) break;
-        }
-        return val;
-    }
 };
 
 #endif // PSC_H
