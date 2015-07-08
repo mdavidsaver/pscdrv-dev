@@ -18,6 +18,8 @@
 
 #include <event2/thread.h>
 
+#include <epicsExit.h>
+
 int PSCDebug = 1;
 int PSCInactivityTime = 5;
 int PSCMaxSendBuffer = 1024 * 1024;
@@ -43,6 +45,7 @@ PSCBase::PSCBase(const std::string &name,
     ,host(host)
     ,port(port)
     ,mask(timeoutmask)
+    ,base(EventBase::makeBase())
     ,session(NULL)
     ,connected(false)
     ,ukncount(0)
@@ -50,7 +53,11 @@ PSCBase::PSCBase(const std::string &name,
     ,sendbuf(evbuffer_new())
     ,message("Initialize")
 {
+    scanIoInit(&scan);
 
+    pscmap[name] = this;
+
+    epicsAtExit(&ioc_atexit, (void*)this);
 }
 
 PSCBase::~PSCBase()
@@ -96,6 +103,8 @@ void PSCBase::queueSend(epicsUInt16 id, const void* buf, epicsUInt32 buflen)
     queueSend(blk, buf, buflen);
 }
 
+void PSCBase::stop() {}
+
 void PSCBase::startAll()
 {
     pscmap_t::const_iterator it, end=pscmap.end();
@@ -120,6 +129,16 @@ void createPSC(const char* name, const char* host, int port, int timeout)
         new PSC(name, host, port, timeout);
     }catch(std::exception& e){
         timefprintf(stderr, "Failed to create PSC '%s': %s\n", name, e.what());
+    }
+}
+
+extern "C"
+void createPSCUDP(const char* name, const char* host, int hostport, int ifaceport)
+{
+    try{
+        new PSCUDP(name, host, hostport, ifaceport, 0);
+    }catch(std::exception& e){
+        timefprintf(stderr, "Failed to create PSCUDP '%s': %s\n", name, e.what());
     }
 }
 
@@ -150,18 +169,47 @@ static void PSCHook(initHookState state)
 }
 
 static
-bool pscreportone(int lvl, PSCBase* psc)
+bool pscreportblock(int lvl, Block* block)
 {
+    printf(" Block %d\n", block->code);
+    printf("  Queued : %s\n", block->queued  ? "Yes":"No");
+    printf("  IOCount: %u  Size: %lu\n", block->count,
+           (unsigned long)block->data.size());
+    return true;
+}
+
+bool PSCBase::ReportOne(int lvl, PSCBase* psc)
+{
+    printf("PSC %s : %s:%d\n", psc->name.c_str(), psc->host.c_str(), psc->port);
+    if(lvl<=0)
+        return true;
+    Guard G(psc->lock);
+    printf(" Connected: %s\n", psc->isConnected() ? "Yes":"No");
+    printf(" Conn Cnt : %u\n", (unsigned)psc->getConnCount());
+    printf(" Unkn Cnt : %u\n", (unsigned)psc->getUnknownCount());
     psc->report(lvl);
+    if(lvl>=2) {
+        block_map::const_iterator it, end;
+        printf(" Send blocks\n");
+        for(it=psc->send_blocks.begin(), end=psc->send_blocks.end(); it!=end; ++it) {
+            pscreportblock(lvl, it->second);
+        }
+        printf(" Recv blocks\n");
+        for(it=psc->recv_blocks.begin(), end=psc->recv_blocks.end(); it!=end; ++it) {
+            pscreportblock(lvl, it->second);
+        }
+    }
     return true;
 }
 
 static
 long pscreport(int level)
 {
-    PSCBase::visit(pscreportone, level);
+    PSCBase::visit(PSCBase::ReportOne, level);
     return 0;
 }
+
+void PSCBase::report(int){}
 
 #include <iocsh.h>
 
@@ -175,6 +223,18 @@ static const iocshFuncDef createPSCDef = {"createPSC", 4, createPSCArgs};
 static void createPSCArgsCallFunc(const iocshArgBuf *args)
 {
     createPSC(args[0].sval, args[1].sval, args[2].ival, args[3].ival);
+}
+
+static const iocshArg createPSCUDPArg0 = {"name", iocshArgString};
+static const iocshArg createPSCUDPArg1 = {"hostname", iocshArgString};
+static const iocshArg createPSCUDPArg2 = {"hostport#", iocshArgInt};
+static const iocshArg createPSCUDPArg3 = {"ifaceport#", iocshArgInt};
+static const iocshArg * const createPSCUDPArgs[] =
+{&createPSCUDPArg0,&createPSCUDPArg1,&createPSCUDPArg2,&createPSCUDPArg3};
+static const iocshFuncDef createPSCUDPDef = {"createPSCUDP", 4, createPSCUDPArgs};
+static void createPSCUDPArgsCallFunc(const iocshArgBuf *args)
+{
+    createPSCUDP(args[0].sval, args[1].sval, args[2].ival, args[3].ival);
 }
 
 static const iocshArg setPSCArg0 = {"name", iocshArgString};
@@ -203,6 +263,7 @@ static void PSCRegister(void)
         return;
     }
     iocshRegister(&createPSCDef, &createPSCArgsCallFunc);
+    iocshRegister(&createPSCUDPDef, &createPSCUDPArgsCallFunc);
     iocshRegister(&setPSCDef, &setPSCCallFunc);
     initHookRegister(&PSCHook);
 }

@@ -41,7 +41,7 @@ long init_common(dbCommon* prec, const char*link)
     try {
         PSCBase *psc = PSCBase::getPSCBase(link);
         if(!psc) {
-            timefprintf(stderr, "%s: can't find PSC '%s'", prec->name, link);
+            timefprintf(stderr, "%s: can't find PSC '%s'\n", prec->name, link);
         }
         prec->dpvt = (void*)psc;
     }CATCH(init_common, prec)

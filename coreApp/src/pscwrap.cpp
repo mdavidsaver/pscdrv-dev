@@ -62,9 +62,9 @@ void PSCUDP::ev_recv(int, short evt, void *raw)
     }CATCH(eventcb)
 }
 
-void PSC::ioc_atexit(void *raw)
+void PSCBase::ioc_atexit(void *raw)
 {
-    PSC *psc=(PSC*)raw;
+    PSCBase *psc=(PSCBase*)raw;
     try{
         Guard g(psc->lock);
         psc->stop();

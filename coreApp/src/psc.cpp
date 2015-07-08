@@ -14,7 +14,6 @@
 #include <cstdio>
 
 #include <errlog.h>
-#include <epicsExit.h>
 #include <dbAccess.h>
 
 #include <event2/buffer.h>
@@ -47,12 +46,6 @@ PSC::PSC(const std::string &name,
     dns = evdns_base_new(eb, 1);
     if(!reconnect_timer || !dns || !sendbuf)
         throw std::bad_alloc();
-
-    scanIoInit(&scan);
-
-    pscmap[name] = this;
-
-    epicsAtExit(&ioc_atexit, (void*)this);
 }
 
 PSC::~PSC()
@@ -368,25 +361,8 @@ void PSC::recvdata()
                              expect >= min_max_buf_size ? expect+1 : min_max_buf_size);
 }
 
-static
-bool pscreportblock(int lvl, Block* block)
-{
-    printf(" Block %d\n", block->code);
-    printf("  Queued : %s\n", block->queued  ? "Yes":"No");
-    printf("  IOCount: %u  Size: %lu\n", block->count,
-           (unsigned long)block->data.size());
-    return true;
-}
-
 void PSC::report(int lvl)
 {
-    printf("PSC %s : %s:%d\n", name.c_str(), host.c_str(), port);
-    if(lvl<=0)
-        return;
-    Guard G(lock);
-    printf(" Connected: %s\n", isConnected() ? "Yes":"No");
-    printf(" Conn Cnt : %u\n", (unsigned)getConnCount());
-    printf(" Unkn Cnt : %u\n", (unsigned)getUnknownCount());
     printf(" Last msg : %s\n", lastMessage().c_str());
     printf(" Decode   : Header:%s %u %u\n",
            have_head?"Yes":"No", header, bodylen);
@@ -402,15 +378,5 @@ void PSC::report(int lvl)
             printf(" Buffers  : Tx:%lu Rx: %lu\n",
                    (unsigned long)tx, (unsigned long)rx);
         }
-        block_map::const_iterator it, end;
-        printf(" Send blocks\n");
-        for(it=send_blocks.begin(), end=send_blocks.end(); it!=end; ++it) {
-            pscreportblock(lvl, it->second);
-        }
-        printf(" Recv blocks\n");
-        for(it=recv_blocks.begin(), end=recv_blocks.end(); it!=end; ++it) {
-            pscreportblock(lvl, it->second);
-        }
     }
 }
-

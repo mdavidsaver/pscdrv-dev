@@ -11,6 +11,7 @@ include $(TOP)/configure/CONFIG
 # Create and install (or just install) into <top>/db
 # databases, templates, substitutions like this
 DB += pscsim.db
+DB += pscudpsim.db
 DB += psctest.db
 DB += psc-ctrl.db
 
