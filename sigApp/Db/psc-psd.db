@@ -1,0 +1,177 @@
+# Power Spectrum calculation
+#
+# P - Name prefix (required)
+# NELM - Max number of array elements (required)
+# FNELM - Max elements in frequency plot (def. NELM, but only NELM/2 is needed)
+# INP - Input link for array data
+# IFLNK - Forward link when input in updated
+# FLNK - Forward link when output is updated
+
+record(longout, "$(P)N:FFT-SP") {
+    field(DTYP, "PSC PSD nfft")
+    field(DESC, "# of fft points")
+    field(OUT , "@$(P)")
+    field(DRVH, "$(NELM)")
+    field(VAL , "$(NELM)")
+    field(UDF , "0")
+    field(PINI, "YES")
+    info(autosaveFields_pass1, "VAL")
+}
+
+record(mbbo, "$(P)Wind-Sel") {
+    field(DTYP, "PSC PSD windtype")
+    field(OUT , "@$(P)")
+    field(ZRST, "None")
+    field(ONST, "Hann")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(PINI, "YES")
+    field(FLNK, "$(P)In-SP")
+    info(autosaveFields_pass1, "RVAL")
+}
+
+record(longout, "$(P)N:Start-SP") {
+    field(DTYP, "PSC PSD start")
+    field(OUT , "@$(P)")
+    field(DRVH, "$(NELM)")
+    field(VAL , "0")
+    field(UDF , "0")
+    field(PINI, "YES")
+    field(FLNK, "$(P)In-SP")
+    info(autosaveFields_pass1, "VAL")
+}
+
+record(longout, "$(P)N:Width-SP") {
+    field(DTYP, "PSC PSD width")
+    field(OUT , "@$(P)")
+    field(DRVH, "$(NELM)")
+    field(VAL , "0")
+    field(UDF , "0")
+    field(PINI, "YES")
+    field(FLNK, "$(P)In-SP")
+    info(autosaveFields_pass1, "VAL")
+}
+
+record(ao, "$(P)F:Samp-SP") {
+    field(DTYP, "PSC PSD fsamp")
+    field(DESC, "Sampling frequency")
+    field(OUT , "@$(P)")
+    field(EGU , "Hz")
+    field(PREC, "1")
+    field(VAL , "$(FSAMP=9961.72)")
+    field(UDF , "0")
+    field(PINI, "YES")
+    info(autosaveFields_pass1, "VAL")
+}
+
+record(ao, "$(P)Scale-SP") {
+    field(DTYP, "PSC PSD scale")
+    field(DESC, "Input scaling factor")
+    field(OUT , "@$(P)")
+    field(VAL , "$(SCALE=1e6)")
+    field(UDF , "0")
+    field(PINI, "YES")
+    info(autosaveFields_pass1, "VAL")
+}
+
+record(bo, "$(P)Run-Sel") {
+    field(ZNAM, "Run")
+    field(ONAM, "Pause")
+    field(PINI, "YES")
+    field(MASK, "1")
+    field(UDF , "0")
+    field(OUT , "$(P)In-SP.DISV NPP")
+}
+
+record(waveform, "$(P)In-SP") {
+    field(DTYP, "PSC PSD input")
+    field(INP , "$(INP=)")
+    field(FTVL, "DOUBLE")
+    field(NELM, "$(NELM)")
+    field(TSE, "-2")
+    field(DISA, "1")
+    field(FLNK, "$(P)N:Time-I")
+    info(CALCNAME, "$(P)")
+}
+
+record(longin, "$(P)N:Time-I") {
+    # Hack since monitors on NORD wan't posted by
+    # older Base
+    field(INP, "$(P)In-SP.NORD")
+    field(FLNK, "$(IFLNK=)")
+}
+
+
+record(waveform, "$(P)Freq-I") {
+    field(DTYP, "PSC PSD fscale")
+    field(INP , "@$(P)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "DOUBLE")
+    field(PREC, "3")
+    field(NELM, "$(FNELM=$(NELM))")
+    field(FLNK, "$(P)N:FFT-I")
+}
+
+record(waveform, "$(P)Wind-I") {
+    field(DTYP, "PSC PSD window")
+    field(INP , "@$(P)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "DOUBLE")
+    field(PREC, "3")
+    field(NELM, "$(NELM)")
+}
+
+record(longin, "$(P)N:FFT-I") {
+    # Hack since monitors on NORD wan't posted by
+    # older Base
+    field(INP, "$(P)Freq-I.NORD")
+}
+
+record(waveform, "$(P)Out-I") {
+    field(DTYP, "PSC PSD output")
+    field(INP , "@$(P)")
+    field(SCAN, "I/O Intr")
+    field(FTVL, "DOUBLE")
+    field(NELM, "$(FNELM=$(NELM))")
+    field(PREC, "3")
+    field(TSE, "-2")
+    field(FLNK, "$(P)OutInt-I")
+}
+
+record(waveform, "$(P)OutInt-I") {
+    field(DTYP, "PSC PSD out integral")
+    field(INP , "@$(P)")
+    field(FTVL, "DOUBLE")
+    field(NELM, "$(FNELM=$(NELM))")
+    field(PREC, "3")
+    field(TSE, "-2")
+    field(FLNK, "$(P)Pwr:TotT-I")
+}
+
+record(ai, "$(P)Pwr:TotT-I") {
+    field(DTYP, "PSC PSD totpwrtime")
+    field(DESC, "Total power of input signal")
+    field(INP , "@$(P)")
+    field(PREC, "3")
+    field(TSE, "-2")
+    field(FLNK, "$(P)Pwr:TotF-I")
+}
+
+record(ai, "$(P)Pwr:TotF-I") {
+    field(DTYP, "PSC PSD totpwrfreq")
+    field(DESC, "Total power of output signal")
+    field(INP , "@$(P)")
+    field(PREC, "3")
+    field(TSE, "-2")
+    field(FLNK, "$(P)Time-I")
+}
+
+record(ai, "$(P)Time-I") {
+    field(DTYP, "PSC PSD runtime")
+    field(DESC, "Calculation time")
+    field(INP , "@$(P)")
+    field(PREC, "3")
+    field(ASLO, "1e-3")
+    field(EGU , "ms")
+    field(FLNK, "$(FLNK=)")
+}
