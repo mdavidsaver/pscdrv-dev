@@ -179,9 +179,13 @@ void PSDCalc::calculate()
         for(size_t i=0; i<nbins; i++) {
             fftw_complex *mid=&middle[i][0];
             for(size_t j=1; j<nfreq; j++) {
-                fftw_complex temp = mid[j];
+                fftw_complex& temp = mid[j];
                 // output[j] += temp**2
+#define creal(C) C[0]
+#define cimag(C) C[1]
                 out[j-1] += creal(temp)*creal(temp) + cimag(temp)*cimag(temp);
+#undef creal
+#undef cimag
             }
         }
 
