@@ -32,6 +32,7 @@ CROSS_COMPILER_TARGET_ARCHS = $(EPICS_HOST_ARCH)-debug
 #   take effect.
 #IOCS_APPL_TOP = </IOC/path/to/application/top>
 
+USR_CPPFLAGS += -DUSE_TYPED_RSET
 
 ## Uncomment to build sigApp/
 #USE_FFTW = YES
