@@ -1,4 +1,4 @@
-function(subCopyWaveform)
+#function(subCopyWaveform)
 #function(bpmWfm_fft_Sup)
 registrar(PSCRegister)
 driver(drvPSC)
