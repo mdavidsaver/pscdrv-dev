@@ -250,9 +250,9 @@ static void setPSCCallFunc(const iocshArgBuf *args)
 static void PSCRegister(void)
 {
     int ret =
-#if defined(WIN32)
+#if defined(EVTHREAD_USE_WINDOWS_THREADS_IMPLEMENTED)
         evthread_use_windows_threads();
-#elif defined(_EVENT_HAVE_PTHREADS)
+#elif defined(EVTHREAD_USE_PTHREADS_IMPLEMENTED)
         evthread_use_pthreads();
 #else
         1;
