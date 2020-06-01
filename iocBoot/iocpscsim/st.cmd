@@ -1,11 +1,11 @@
-#!../../bin/linux-x86/psc
+#!../../bin/linux-x86_64-debug/pscdemo
 
 ## You may have to change psc to something else
 ## everywhere it appears in this file
 
 ## Register all support components
-dbLoadDatabase("../../dbd/psc.dbd",0,0)
-psc_registerRecordDeviceDriver(pdbbase) 
+dbLoadDatabase("../../dbd/pscdemo.dbd",0,0)
+pscdemo_registerRecordDeviceDriver(pdbbase) 
 
 ## Load record instances
 dbLoadRecords("../../db/pscsim.db","P=test:")
