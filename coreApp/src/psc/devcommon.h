@@ -71,10 +71,13 @@ struct Priv
     long step;
 
     bool timeFromBlock;
+    bool tagFromBlock;
     unsigned long tsoffset;
+    unsigned long tagoffset;
 
     template<class R>
-    Priv(R*pr) : prec((dbCommon*)pr), psc(0), bid(0), block(0), offset(0), step(0), timeFromBlock(false) {}
+    Priv(R*pr) : prec((dbCommon*)pr), psc(0), bid(0), block(0), offset(0), step(0),
+        timeFromBlock(false), tagFromBlock(false) {}
 };
 
 void parse_link(Priv* priv, const char* link, int direction);
