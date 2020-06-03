@@ -3,4 +3,6 @@ dbd/
 db/
 include/
 lib/
+envPaths
+*.local
 O.*

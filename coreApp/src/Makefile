@@ -28,6 +28,9 @@ INC += psc/cblist.h
 INC += psc/util.h
 INC += psc/devcommon.h
 
+pscCore_SYS_LIBS += event_core event_extra
+pscCore_SYS_LIBS_Linux += event_pthreads
+
 #===========================
 
 include $(TOP)/configure/RULES
