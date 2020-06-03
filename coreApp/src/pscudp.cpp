@@ -24,7 +24,7 @@ PSCUDP::PSCUDP(const std::string &name,
                unsigned short hostport,
                unsigned short ifaceport,
                unsigned int timeoutmask)
-    :PSCBase(name, host, hostport, mask)
+    :PSCBase(name, host, hostport, timeoutmask)
     ,evt_tx(NULL)
     ,rxscratch(1024) // must be greater than HEADER_SIZE
 {

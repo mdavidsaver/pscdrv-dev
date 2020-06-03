@@ -30,7 +30,7 @@ PSC::PSC(const std::string &name,
          const std::string &host,
          unsigned short port,
          unsigned int timeoutmask)
-    :PSCBase(name, host, port, mask)
+    :PSCBase(name, host, port, timeoutmask)
     ,timer_active(false)
     ,have_head(false)
     ,header(0)
