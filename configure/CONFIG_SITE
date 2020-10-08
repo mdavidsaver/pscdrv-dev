@@ -36,3 +36,6 @@ USR_CPPFLAGS += -DUSE_TYPED_RSET
 
 ## Uncomment to build sigApp/
 #USE_FFTW = YES
+
+-include $(TOP)/../CONFIG_SITE.local
+-include $(TOP)/configure/CONFIG_SITE.local
