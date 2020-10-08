@@ -10,13 +10,15 @@
 #include <stringinRecord.h>
 #include <stringoutRecord.h>
 
+#include "utilpvt.h"
+
 namespace {
 
 long init_si_record(stringinRecord* prec)
 {
     assert(prec->inp.type==INST_IO);
     try {
-        std::auto_ptr<Priv> priv(new Priv(prec));
+        psc::auto_ptr<Priv> priv(new Priv(prec));
 
         parse_link(priv.get(), prec->inp.value.instio.string, 0);
 
@@ -30,7 +32,7 @@ long init_so_record(stringoutRecord* prec)
 {
     assert(prec->out.type==INST_IO);
     try {
-        std::auto_ptr<Priv> priv(new Priv(prec));
+        psc::auto_ptr<Priv> priv(new Priv(prec));
 
         parse_link(priv.get(), prec->out.value.instio.string, 1);
 

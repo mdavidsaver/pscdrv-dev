@@ -21,6 +21,8 @@
 
 #include <menuConvert.h>
 
+#include "utilpvt.h"
+
 namespace {
 
 template<typename R> struct extra_init {static void op(R* prec){}};
@@ -90,7 +92,7 @@ long init_output(R* prec)
     assert(prec->out.type==INST_IO);
     extra_init<R>::op(prec);
     try {
-        std::auto_ptr<SinglePriv> priv(new SinglePriv(prec));
+        psc::auto_ptr<SinglePriv> priv(new SinglePriv(prec));
 
         RecInfo info((dbCommon*)prec);
 

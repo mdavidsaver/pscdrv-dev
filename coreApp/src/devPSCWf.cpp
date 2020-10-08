@@ -13,6 +13,8 @@
 #include <menuFtype.h>
 #include <waveformRecord.h>
 
+#include "utilpvt.h"
+
 namespace {
 
 template<int dir>
@@ -24,7 +26,7 @@ long init_wf_record(waveformRecord* prec)
         return 0;
     }
     try {
-        std::auto_ptr<Priv> priv(new Priv(prec));
+        psc::auto_ptr<Priv> priv(new Priv(prec));
 
         parse_link(priv.get(), prec->inp.value.instio.string, dir);
 
@@ -43,7 +45,7 @@ long init_wf_record_bytes(waveformRecord* prec)
         return 0;
     }
     try {
-        std::auto_ptr<Priv> priv(new Priv(prec));
+        psc::auto_ptr<Priv> priv(new Priv(prec));
 
         parse_link(priv.get(), prec->inp.value.instio.string, dir);
 

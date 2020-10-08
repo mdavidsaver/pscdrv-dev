@@ -20,6 +20,8 @@
 
 #include <epicsExit.h>
 
+#include "utilpvt.h"
+
 int PSCDebug = 1;
 int PSCInactivityTime = 5;
 int PSCMaxSendBuffer = 1024 * 1024;
@@ -70,7 +72,7 @@ Block* PSCBase::getSend(epicsUInt16 block)
     block_map::const_iterator it = send_blocks.find(block);
     if(it!=send_blocks.end())
         return it->second;
-    std::auto_ptr<Block> ret(new Block(this, block));
+    psc::auto_ptr<Block> ret(new Block(this, block));
     send_blocks[block] = ret.get();
     return ret.release();
 }
@@ -80,7 +82,7 @@ Block* PSCBase::getRecv(epicsUInt16 block)
     block_map::const_iterator it = recv_blocks.find(block);
     if(it!=recv_blocks.end())
         return it->second;
-    std::auto_ptr<Block> ret(new Block(this, block));
+    psc::auto_ptr<Block> ret(new Block(this, block));
     recv_blocks[block] = ret.get();
     return ret.release();
 }
