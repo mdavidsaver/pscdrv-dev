@@ -70,7 +70,6 @@ void parse_link(Priv* priv, const char* link, int direction)
                 priv->prec->name, block, name.c_str());
         throw std::runtime_error("PSC can't get block #");
     }
-    return;
 }
 
 namespace {

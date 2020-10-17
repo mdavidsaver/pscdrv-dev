@@ -17,12 +17,10 @@
 std::tr1::weak_ptr<EventBase> EventBase::last_base;
 
 EventBase::EventBase()
-    :epicsThreadRunable()
-    ,base(NULL)
+    :base(NULL)
     ,runner(*this, "eventbase",
             epicsThreadGetStackSize(epicsThreadStackSmall),
             epicsThreadPriorityHigh)
-    ,lock()
     ,running(false)
 {
     base = event_base_new();

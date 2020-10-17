@@ -18,14 +18,12 @@
 #include <stringinRecord.h>
 
 recAlarm::recAlarm()
-    :std::exception()
-    ,status(COMM_ALARM)
+    :status(COMM_ALARM)
     ,severity(INVALID_ALARM)
 {}
 
 recAlarm::recAlarm(short sts, short sevr)
-    :std::exception()
-    ,status(sts)
+    :status(sts)
     ,severity(sevr)
 {}
 
