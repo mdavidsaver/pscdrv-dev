@@ -40,7 +40,7 @@ template<> struct extra_init<mbboDirectRecord>{
 
 struct SinglePriv : Priv
 {
-    Block::data_t syncData;
+    std::vector<char> syncData;
 
     CALLBACK syncCB;
 
@@ -58,10 +58,9 @@ void received_block(void* raw, Block* block)
         char bytes[sizeof(epicsUInt32)];
     } data;
 
-    if(block->data.size()<8)
+    if(priv->block->data.copyout(data.bytes, sizeof(data.bytes))) {
         return;
-
-    memcpy(data.bytes, &priv->block->data[0], sizeof(data.bytes));
+    }
 
     // not for this record
     if(priv->offset!=ntohl(data.addr))
@@ -70,9 +69,8 @@ void received_block(void* raw, Block* block)
     bool alreadyQueued = !priv->syncData.empty();
 
     priv->syncData.resize(block->data.size());
-    std::copy(priv->block->data.begin(),
-              priv->block->data.end(),
-              priv->syncData.begin());
+    size_t actual = priv->block->data.copyout(&priv->syncData[0], priv->syncData.size());
+    priv->syncData.resize(actual); // maybe downsize
 
     if(!alreadyQueued)
         callbackRequest(&priv->syncCB);

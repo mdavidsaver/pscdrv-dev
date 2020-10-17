@@ -66,7 +66,7 @@ long get_iointr_info(int cmd, dbCommon *prec, IOSCANPVT *io)
 }
 
 template<typename T>
-long read_wf(waveformRecord* prec)
+long read_wf_real(waveformRecord* prec)
 {
     if(!prec->dpvt)
         return -1;
@@ -81,25 +81,23 @@ long read_wf(waveformRecord* prec)
             return 0;
         }
 
-        double *pto = (double*)prec->bptr;
-        const char *pfrom = &priv->block->data[0];
-
-        const size_t len = priv->block->data.size(); // available # of bytes
-        const size_t nelm = prec->nelm; // # of elements which can be accepted
         // source step size in bytes, default to element size
         const size_t step = priv->step!=0 ? priv->step : sizeof(T);
-        size_t dest = 0; // current dest element
+        const size_t skip = step>=sizeof(T) ? step-sizeof(T) : 0u;
 
-        for(size_t src=priv->offset;
-            dest<nelm && src<len;
-            dest++, src+=step)
-        {
-            // endian fix and cast to target value type
-            T ival = bytes2val<T>(pfrom + src);
-            pto[dest] = ival;
+        // HACK: we are copying integers into a double[]
+        // this is safe so long as sizeof(T)<=sizeof(double)
+        size_t ncopied = priv->block->data.copyout_shape(prec->bptr, priv->offset, sizeof(T), skip, prec->nelm);
+        size_t nelem = ncopied;
+
+        // step backwards since we are expanding the used size of the array
+        for(size_t i=nelem; i; i--) {
+            T raw = ((T*)prec->bptr)[i-1u];
+
+            ((double*)prec->bptr)[i-1u] = ntoh(raw);
         }
 
-        prec->nord = dest;
+        prec->nord = nelem;
 
         setRecTimestamp(priv);
     }CATCH(read_wf, prec)
@@ -122,14 +120,7 @@ long read_wf_bytes(waveformRecord* prec)
             return 0;
         }
 
-        char *pto = (char*)prec->bptr;
-        char *pfrom = &priv->block->data[0];
-
-        size_t len = priv->block->data.size();
-        if(len>=prec->nelm)
-            len=prec->nelm;
-
-        memcpy(pto, pfrom, len);
+        size_t len = priv->block->data.copyout_shape(prec->bptr, priv->offset, prec->nelm, 0u, 1u);
 
         prec->nord = len;
 
@@ -193,16 +184,16 @@ long write_wf_bytes(waveformRecord* prec)
 MAKEDSET(waveform, devPSCBlockInWf8, &init_wf_record_bytes<0>, &get_iointr_info, &read_wf_bytes);
 MAKEDSET(waveform, devPSCBlockOutWf8, &init_wf_record_bytes<1>, &get_iointr_info, &write_wf_bytes);
 
-MAKEDSET(waveform, devPSCBlockInWf16, &init_wf_record<0>, &get_iointr_info, &read_wf<epicsInt16>);
+MAKEDSET(waveform, devPSCBlockInWf16, &init_wf_record<0>, &get_iointr_info, &read_wf_real<epicsInt16>);
 MAKEDSET(waveform, devPSCBlockOutWf16, &init_wf_record<1>, &get_iointr_info, &write_wf<epicsInt16>);
 
-MAKEDSET(waveform, devPSCBlockInWf32, &init_wf_record<0>, &get_iointr_info, &read_wf<epicsInt32>);
+MAKEDSET(waveform, devPSCBlockInWf32, &init_wf_record<0>, &get_iointr_info, &read_wf_real<epicsInt32>);
 MAKEDSET(waveform, devPSCBlockOutWf32, &init_wf_record<1>, &get_iointr_info, &write_wf<epicsInt32>);
 
-MAKEDSET(waveform, devPSCBlockInWfF32, &init_wf_record<0>, &get_iointr_info, &read_wf<float>);
+MAKEDSET(waveform, devPSCBlockInWfF32, &init_wf_record<0>, &get_iointr_info, &read_wf_real<float>);
 MAKEDSET(waveform, devPSCBlockOutWfF32, &init_wf_record<1>, &get_iointr_info, &write_wf<float>);
 
-MAKEDSET(waveform, devPSCBlockInWfF64, &init_wf_record<0>, &get_iointr_info, &read_wf<double>);
+MAKEDSET(waveform, devPSCBlockInWfF64, &init_wf_record<0>, &get_iointr_info, &read_wf_real<double>);
 MAKEDSET(waveform, devPSCBlockOutWfF64, &init_wf_record<1>, &get_iointr_info, &write_wf<double>);
 
 } // namespace

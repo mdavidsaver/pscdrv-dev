@@ -8,10 +8,13 @@
 #ifndef EVBASE_H
 #define EVBASE_H
 
+#include <vector>
 #include <tr1/memory>
 
 #include <epicsThread.h>
 #include <epicsMutex.h>
+
+#include <event2/buffer.h>
 
 #include "util.h"
 
@@ -44,6 +47,54 @@ public:
     static pointer makeBase();
 private:
     static std::tr1::weak_ptr<EventBase> last_base;
+};
+
+
+//! Dis-contiguous byte buffer
+class dbuffer
+{
+    std::vector<evbuffer_iovec> strides;
+    std::vector<char> backingv;
+    evbuffer* backingb;
+    template<typename B>
+    struct stride_ptr;
+
+    dbuffer(const dbuffer&);
+    dbuffer& operator=(const dbuffer&);
+public:
+    dbuffer() :backingb(0) {}
+    dbuffer(size_t n);
+    ~dbuffer();
+
+    void swap(dbuffer& o)
+    {
+        if(this!=&o) {
+            strides.swap(o.strides);
+            backingv.swap(o.backingv);
+            std::swap(backingb, o.backingb);
+        }
+    }
+
+    size_t size() const;
+
+    void clear();
+    void resize(size_t newlen);
+
+    // resize and copy in
+    void assign(const void *buf, size_t len);
+
+    // move contents in.  Removes 'len' bytes from input evbuffer
+    void consume(evbuffer *buf, size_t len=(size_t)-1);
+
+    bool copyin(const void *buf, size_t offset, size_t len);
+
+    bool copyout(void *dest, size_t nbytes) const {
+        return copyout_shape(dest, 0u, nbytes, 0u, 1u)==1u;
+    }
+    // returns number of elements copied
+    size_t copyout_shape(void *dest, size_t offset, size_t esize, size_t eskip, size_t ecount) const;
+
+    void copyout(evbuffer* dest) const;
 };
 
 #endif // EVBASE_H

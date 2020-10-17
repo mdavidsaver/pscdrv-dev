@@ -78,8 +78,7 @@ struct Block
     PSCBase& psc;
     const epicsUInt16 code;
 
-    typedef std::vector<char> data_t;
-    data_t data;
+    dbuffer data;
 
     bool queued;
 
@@ -132,9 +131,13 @@ public:
     Block* getSend(epicsUInt16);
     Block* getRecv(epicsUInt16);
 
+private:
+    void queueHeader(Block* blk, epicsUInt16 id, epicsUInt32 buflen);
+public:
     void send(epicsUInt16);
     void queueSend(epicsUInt16, const void*, epicsUInt32);
-    virtual void queueSend(Block*, const void*, epicsUInt32)=0;
+    void queueSend(Block*, const dbuffer&);
+    virtual void queueSend(Block*, const void*, epicsUInt32);
 
     virtual void connect()=0;
     virtual void stop();
@@ -195,8 +198,6 @@ public:
         unsigned short port,
         unsigned int timeoutmask);
     virtual ~PSC();
-
-    virtual void queueSend(Block*, const void*, epicsUInt32) override;
 
     virtual void flushSend() override;
     virtual void forceReConnect() override;

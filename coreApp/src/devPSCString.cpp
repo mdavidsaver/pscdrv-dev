@@ -75,7 +75,7 @@ long read_si(stringinRecord* prec)
             prec->val[0]='\0';
         } else {
             len -= priv->offset;
-            strncpy(prec->val, &priv->block->data[priv->offset], len);
+            priv->block->data.copyout_shape(prec->val, priv->offset, len, 0u, 1u);
             prec->val[len]='\0';
         }
 
@@ -103,9 +103,7 @@ long write_so(stringoutRecord* prec)
 
         priv->psc->queueSend(priv->block, (void*)&prec->val[0], len);
 
-        priv->block->data.resize(len);
-
-        memcpy(&priv->block->data[0], prec->val, len);
+        priv->block->data.assign(prec->val, len);
     }CATCH(write_so, prec)
 
     return 0;

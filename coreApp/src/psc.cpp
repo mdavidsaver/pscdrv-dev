@@ -52,44 +52,6 @@ PSC::~PSC()
 {
 }
 
-void PSC::queueSend(Block* blk, const void* buf, epicsUInt32 buflen)
-{
-    if(!connected)
-        return;
-
-    if(blk->queued)
-        throw recAlarm();
-
-    char hbuf[HEADER_SIZE];
-
-    hbuf[0] = 'P';
-    hbuf[1] = 'S';
-    *(epicsUInt16*)(hbuf+2) = htons(blk->code);
-    *(epicsUInt32*)(hbuf+4) = htonl(buflen);
-
-    if(PSCMaxSendBuffer>0 &&
-       evbuffer_get_length(sendbuf)>=(size_t)PSCMaxSendBuffer)
-        throw std::runtime_error("Enqueuing message would exceed buffer");
-
-    if(evbuffer_expand(sendbuf, HEADER_SIZE+buflen))
-        throw std::runtime_error("Unable to enqueue message.  Insufficient memory.");
-
-    int err = evbuffer_add(sendbuf, hbuf, HEADER_SIZE);
-
-    if(!err)
-        err = evbuffer_add(sendbuf, buf, buflen);
-
-    // calling evbuffer_expand should ensure the adds never fail
-    assert(!err);
-
-    blk->queued = true;
-    blk->count++;
-
-    if(PSCDebug>1)
-        timefprintf(stderr, "%s: enqueue block %u %lu bytes\n",
-                name.c_str(), blk->code, (unsigned long)buflen);
-}
-
 /* move contents of send queue to socket send buffer. (aka. actually send) */
 void PSC::flushSend()
 {
@@ -330,10 +292,8 @@ void PSC::recvdata()
                 if(PSCDebug>2)
                     timefprintf(stderr, "%s: Process message %u\n", name.c_str(), header);
 
-                bodyblock->data.reserve(bodylen);
-                bodyblock->data.resize(bodylen);
+                bodyblock->data.consume(buf, bodylen);
 
-                evbuffer_remove(buf, &bodyblock->data[0], bodylen);
                 scanIoRequest(bodyblock->scan);
                 bodyblock->listeners(bodyblock);
 

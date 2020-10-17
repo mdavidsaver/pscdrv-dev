@@ -108,23 +108,20 @@ long get_iointr_info(int cmd, dbCommon *prec, IOSCANPVT *io)
 template<typename T>
 void read_to_field(dbCommon *prec, Priv *priv, T* pfield)
 {
+    if(!priv->psc->isConnected()) {
+        int junk = recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+        junk += 1;
+    }
+
     if(priv->offset > priv->block->data.size()
-            || (priv->block->data.size() - priv->offset) < sizeof(T))
+            || priv->block->data.copyout_shape(pfield, priv->offset, sizeof(T), 0u, 1u)!=1)
     {
         timeprintf("%s: offset %d does not fit in block of size %d\n",
                prec->name, (int)priv->offset, (int)priv->block->data.size());
         throw recAlarm(SOFT_ALARM, INVALID_ALARM);
     }
 
-    if(!priv->psc->isConnected()) {
-        int junk = recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-        junk += 1;
-    }
-
-    const T* pdata = (T*)&priv->block->data[priv->offset];
-
-    *pfield = ntoh(*pdata);
-    return;
+    *pfield = ntoh(*pfield);
 }
 
 // use for bi, mbbi, and mbbiDirect
@@ -206,21 +203,18 @@ long read_ai_float(aiRecord* prec)
 template<typename T>
 void write_from_field(dbCommon *prec, Priv *priv, const T* pfield)
 {
-    if(priv->offset > priv->block->data.size()
-            || (priv->block->data.size() - priv->offset) < sizeof(T))
-    {
-        throw recAlarm(SOFT_ALARM, INVALID_ALARM);
-    }
-
     if(!priv->psc->isConnected()) {
         int junk = recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
         junk += 1;
     }
 
-    T *pdata = (T*)&priv->block->data[priv->offset];
+    T temp = hton(*pfield);
 
-    *pdata = hton(*pfield);
-    return;
+    if(priv->offset > priv->block->data.size()
+            || !priv->block->data.copyin(&temp, priv->offset, sizeof(T)))
+    {
+        throw recAlarm(SOFT_ALARM, INVALID_ALARM);
+    }
 }
 
 // used for bo, mbbo, and mbboDirect

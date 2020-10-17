@@ -97,19 +97,14 @@ void setRecTimestamp(Priv *priv)
 
     epicsTime result;
 
+    // extract timestamp from block data
+    tsdata raw;
+
     if(priv->timeFromBlock &&
             priv->block &&
-            priv->block->data.size() > (priv->tsoffset+sizeof(rawts))
-        ) {
-        // extract timestamp from block data
-        tsdata raw;
-        Block::data_t& bdata = priv->block->data;
-
-        std::copy(bdata.begin()+priv->tsoffset,
-                  bdata.begin()+priv->tsoffset+sizeof(raw.bytes),
-                  raw.bytes);
-
-
+            priv->block->data.copyout_shape(raw.bytes, priv->tsoffset, sizeof(raw.bytes), 0u, 1u)==1
+        )
+    {
         epicsTimeStamp ts;
         ts.secPastEpoch = ntohl(raw.ts.sec) - POSIX_TIME_AT_EPICS_EPOCH;
         ts.nsec = ntohl(raw.ts.nsec);

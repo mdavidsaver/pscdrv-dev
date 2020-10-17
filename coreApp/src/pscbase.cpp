@@ -31,13 +31,11 @@ PSCBase::pscmap_t PSCBase::pscmap;
 Block::Block(PSCBase *p, epicsUInt16 c)
     :psc(*p)
     ,code(c)
-    ,data()
     ,queued(false)
     ,scan()
 {
     scanIoInit(&scan);
 }
-
 
 PSCBase::PSCBase(const std::string &name,
                  const std::string &host,
@@ -95,7 +93,36 @@ void PSCBase::send(epicsUInt16 bid)
         return;
     Block *block = it->second;
 
-    queueSend(block, &block->data[0], block->data.size());
+    queueSend(block, block->data);
+}
+
+void PSCBase::queueHeader(Block* blk, epicsUInt16 id, epicsUInt32 buflen)
+{
+    if(!connected)
+        return;
+
+    if(blk->queued)
+        throw recAlarm();
+
+    const unsigned hsize=8;
+    char hbuf[hsize];
+
+    hbuf[0] = 'P';
+    hbuf[1] = 'S';
+    *(epicsUInt16*)(hbuf+2) = htons(blk->code);
+    *(epicsUInt32*)(hbuf+4) = htonl(buflen);
+
+    if(PSCMaxSendBuffer>0 &&
+       evbuffer_get_length(sendbuf)>=(size_t)PSCMaxSendBuffer)
+        throw std::runtime_error("Enqueuing message would exceed buffer");
+
+    if(evbuffer_expand(sendbuf, hsize+buflen))
+        throw std::runtime_error("Unable to enqueue message.  Insufficient memory.");
+
+    int err = evbuffer_add(sendbuf, hbuf, hsize);
+
+    // calling evbuffer_expand should ensure the adds never fails
+    assert(!err);
 }
 
 /* add a new message to the send queue */
@@ -103,6 +130,29 @@ void PSCBase::queueSend(epicsUInt16 id, const void* buf, epicsUInt32 buflen)
 {
     Block *blk = getSend(id);
     queueSend(blk, buf, buflen);
+}
+
+void PSCBase::queueSend(Block* blk, const dbuffer& buf)
+{
+    queueHeader(blk, blk->code, buf.size());
+    buf.copyout(sendbuf);
+}
+
+void PSCBase::queueSend(Block* blk, const void* buf, epicsUInt32 buflen)
+{
+    queueHeader(blk, blk->code, buflen);
+
+    int err = evbuffer_add(sendbuf, buf, buflen);
+
+    // calling evbuffer_expand should ensure the adds never fail
+    assert(!err);
+
+    blk->queued = true;
+    blk->count++;
+
+    if(PSCDebug>1)
+        timefprintf(stderr, "%s: enqueue block %u %lu bytes\n",
+                name.c_str(), blk->code, (unsigned long)buflen);
 }
 
 void PSCBase::stop() {}
@@ -154,7 +204,7 @@ void setPSCSendBlockSize(const char* name, int bid, int size)
         Block *block = psc->getSend(bid);
         if(!block)
             throw std::runtime_error("Can't select PSC Block");
-        block->data.resize(size, 0);
+        block->data.resize(size);
         timefprintf(stderr, "Set PSC '%s' send block %d size to %lu bytes\n",
                 name, bid, (unsigned long)block->data.size());
     }catch(std::exception& e){

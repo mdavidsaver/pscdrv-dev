@@ -198,8 +198,7 @@ void PSCUDP::recvdata(short evt)
             }
             bodyblock.count++;
 
-            bodyblock.data.resize(bodylen);
-            memcpy(&bodyblock.data[0], hbuf+8, bodylen);
+            bodyblock.data.assign(hbuf+8, bodylen);
 
             scanIoRequest(bodyblock.scan);
             bodyblock.listeners(&bodyblock);
@@ -219,6 +218,7 @@ void PSCUDP::recvdata(short evt)
                     name.c_str(), npkt, nloop);
 }
 
+// TODO: send not implemented
 void PSCUDP::flushSend() {}
 void PSCUDP::queueSend(Block *, const void *, epicsUInt32) {}
 void PSCUDP::forceReConnect() {}
