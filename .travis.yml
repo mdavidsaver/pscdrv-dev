@@ -1,6 +1,6 @@
 language: cpp
 compiler: gcc
-dist: xenial
+dist: bionic
 
 cache:
   directories:
@@ -31,6 +31,8 @@ script:
 
 jobs:
   include:
+  - env: BASE=7.0 EXTRA='CMD_CXXFLAGS=-std=c++11 -Wall -Werror'
+
   - env: BASE=7.0 BCFG=static
 
   - env: BASE=7.0
@@ -41,8 +43,6 @@ jobs:
 
   - env: BASE=7.0
     compiler: clang
-
-  - env: BASE=7.0 EXTRA="CMD_CXXFLAGS=-std=c++11"
 
   - env: BASE=7.0
     dist: trusty

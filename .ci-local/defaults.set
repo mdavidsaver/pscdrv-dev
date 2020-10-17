@@ -3,3 +3,5 @@ BASE_DIRNAME=base
 BASE_REPONAME=epics-base
 BASE_REPOOWNER=epics-base
 BASE_VARNAME=EPICS_BASE
+# skip PVA modules for speed
+BASE_RECURSIVE=no
