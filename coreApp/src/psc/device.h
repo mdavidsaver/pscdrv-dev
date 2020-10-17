@@ -29,6 +29,15 @@
 
 #include "cblist.h"
 
+#if __cplusplus<201103L
+#  ifndef override
+#    define override
+#  endif
+#  ifndef final
+#    define final
+#  endif
+#endif
+
 extern "C" {
 extern int PSCDebug;
 extern int PSCInactivityTime;
@@ -187,12 +196,12 @@ public:
         unsigned int timeoutmask);
     virtual ~PSC();
 
-    virtual void queueSend(Block*, const void*, epicsUInt32);
+    virtual void queueSend(Block*, const void*, epicsUInt32) override;
 
-    virtual void flushSend();
-    virtual void forceReConnect();
+    virtual void flushSend() override;
+    virtual void forceReConnect() override;
 
-    virtual void report(int lvl);
+    virtual void report(int lvl) override;
 private:
 
     // RX message decoding
@@ -204,13 +213,13 @@ private:
 
     void sendblock(Block*);
 
-    virtual void connect();
+    virtual void connect() override;
     void start_reconnect();
 
     // libevent callbacks
     void eventcb(short);
     void recvdata();
-    virtual void stop();
+    virtual void stop() override;
     void reconnect();
 
     static void bev_eventcb(bufferevent*,short,void*);
@@ -228,10 +237,10 @@ public:
            unsigned int timeoutmask);
     virtual ~PSCUDP();
 
-    virtual void queueSend(Block*, const void*, epicsUInt32);
+    virtual void queueSend(Block*, const void*, epicsUInt32) override;
 
-    virtual void flushSend();
-    virtual void forceReConnect();
+    virtual void flushSend() override;
+    virtual void forceReConnect() override;
 
 private:
     sockaddr_in ep;
@@ -243,7 +252,7 @@ private:
     std::list<buffer_t> txqueue;
     buffer_t rxscratch;
 
-    virtual void connect();
+    virtual void connect() override;
 
     void senddata(short evt);
     void recvdata(short evt);
