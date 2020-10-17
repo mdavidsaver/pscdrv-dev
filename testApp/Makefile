@@ -5,6 +5,8 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
+USR_CPPFLAGS += -I$(TOP)/coreApp/src
+
 PROD_LIBS += Com
 
 TESTPROD_HOST += testValues

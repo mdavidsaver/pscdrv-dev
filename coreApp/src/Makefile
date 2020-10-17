@@ -22,12 +22,6 @@ pscCore_SRCS += devPSCReg.cpp
 pscCore_SRCS += devPSCSingle.cpp
 pscCore_SRCS += devPSCCtrl.cpp
 
-INC += psc/device.h
-INC += psc/evbase.h
-INC += psc/cblist.h
-INC += psc/util.h
-INC += psc/devcommon.h
-
 pscCore_SYS_LIBS += event_core event_extra
 pscCore_SYS_LIBS_Linux += event_pthreads
 
