@@ -21,6 +21,11 @@
 
 #include <menuConvert.h>
 
+#ifdef PSCDRV_USE64
+#  include <int64inRecord.h>
+#  include <int64outRecord.h>
+#endif
+
 #include "utilpvt.h"
 
 namespace {
@@ -165,17 +170,17 @@ void read_msg(dbCommon *prec, SinglePriv *priv, T* value)
         prec->nsta = prec->nsev = 0;
 }
 
-template<typename T>
-long write_msg_val(longoutRecord* prec) {
+template<typename Rec>
+long write_msg_val(Rec* prec) {
     if(!prec->dpvt)
         return -1;
     SinglePriv *priv=(SinglePriv*)prec->dpvt;
 
     try {
         if(!priv->syncNow)
-            write_msg<T>((dbCommon*)prec, priv, prec->val);
+            write_msg<__typeof(prec->val)>((dbCommon*)prec, priv, prec->val);
         else
-            read_msg<T>((dbCommon*)prec, priv, &prec->val);
+            read_msg<__typeof(prec->val)>((dbCommon*)prec, priv, &prec->val);
         prec->udf = 0;
     }CATCH(write_msg_val, prec)
 
@@ -258,7 +263,11 @@ MAKEDSET(mbbo, devPSCSingleU32Mbbo, &init_output<mbboRecord>, NULL, &write_msg_b
 
 MAKEDSET(mbboDirect, devPSCSingleU32MbboDirect, &init_output<mbboDirectRecord>, NULL, &write_msg_binary_rval<mbboDirectRecord>);
 
-MAKEDSET(longout, devPSCSingleS32Lo, &init_output<longoutRecord>, NULL, &write_msg_val<epicsInt32>);
+MAKEDSET(longout, devPSCSingleS32Lo, &init_output<longoutRecord>, NULL, &write_msg_val<longoutRecord>);
+
+#ifdef PSCDRV_USE64
+  MAKEDSET(int64out, devPSCSingleS64I64o, &init_output<int64outRecord>, NULL, &write_msg_val<int64outRecord>);
+#endif
 
 MAKEDSET(ao, devPSCSingleS32Ao, &init_output<aoRecord>, NULL, &write_msg_rval);
 
@@ -272,6 +281,9 @@ epicsExportAddress(dset, devPSCSingleU32Bo);
 epicsExportAddress(dset, devPSCSingleU32Mbbo);
 epicsExportAddress(dset, devPSCSingleU32MbboDirect);
 epicsExportAddress(dset, devPSCSingleS32Lo);
+#ifdef PSCDRV_USE64
+  epicsExportAddress(dset, devPSCSingleS64I64o);
+#endif
 epicsExportAddress(dset, devPSCSingleS32Ao);
 epicsExportAddress(dset, devPSCSingleF32Ao);
 epicsExportAddress(dset, devPSCSingleF64Ao);

@@ -8,8 +8,6 @@
 #ifndef DEVCOMMON_H
 #define DEVCOMMON_H
 
-#include "device.h"
-
 #include <cstdio>
 #include <cstring>
 #include <sstream>
@@ -26,6 +24,13 @@
 #include <dbStaticLib.h>
 #include <dbAccess.h>
 #include <dbCommon.h>
+
+#include "device.h"
+#include "util.h"
+
+#if EPICS_VERSION_INT>=VERSION_INT(7,0,0,0)
+#  define PSCDRV_USE64
+#endif
 
 #define CATCH(NAME, REC) \
     catch(recAlarm& e) {\

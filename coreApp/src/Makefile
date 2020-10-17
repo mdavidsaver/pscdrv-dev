@@ -25,9 +25,23 @@ pscCore_SRCS += devPSCCtrl.cpp
 pscCore_SYS_LIBS += event_core event_extra
 pscCore_SYS_LIBS_Linux += event_pthreads
 
+ifdef BASE_7_0
+PSCDBD = ../pscCore-new.dbd
+else
+PSCDBD = ../pscCore-old.dbd
+$(error oops)
+endif
+
 #===========================
 
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
+
+../O.Common/pscCore.dbd: $(PSCDBD)
+	$(CP) $< $@
+
+pscCore.dbd$(DEP):
+	@$(RM) $@
+	@echo "$(COMMONDEP_TARGET): ../Makefile" > $@
 

@@ -12,6 +12,15 @@
 
 #include <compilerDependencies.h>
 
+#include <epicsVersion.h>
+
+#ifndef VERSION_INT
+#  define VERSION_INT(V,R,M,P) ( ((V)<<24) | ((R)<<16) | ((M)<<8) | (P))
+#endif
+#ifndef EPICS_VERSION_INT
+#  define EPICS_VERSION_INT VERSION_INT(EPICS_VERSION, EPICS_REVISION, EPICS_MODIFICATION, EPICS_PATCH_LEVEL2)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

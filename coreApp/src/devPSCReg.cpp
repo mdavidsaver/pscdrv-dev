@@ -22,6 +22,11 @@
 #include <aiRecord.h>
 #include <aoRecord.h>
 
+#ifdef PSCDRV_USE64
+#  include <int64inRecord.h>
+#  include <int64outRecord.h>
+#endif
+
 #include <menuConvert.h>
 
 #include "utilpvt.h"
@@ -143,14 +148,15 @@ long read_binary(R *prec)
     return 0;
 }
 
-long read_li(longinRecord* prec)
+template<typename Rec>
+long read_to_val(Rec* prec)
 {
     if(!prec->dpvt)
         return -1;
     Priv *priv=(Priv*)prec->dpvt;
     try {
         Guard g(priv->psc->lock);
-        epicsInt32 v;
+        __typeof(prec->val) v;
 
         read_to_field((dbCommon*)prec, priv, &v);
         prec->val = v;
@@ -243,14 +249,15 @@ long write_binary(R *prec)
     return 0;
 }
 
-long write_lo(longoutRecord *prec)
+template<typename Rec>
+long write_from_val(Rec *prec)
 {
     if(!prec->dpvt)
         return -1;
     Priv *priv=(Priv*)prec->dpvt;
     try {
         Guard g(priv->psc->lock);
-        epicsInt32 v = prec->val;
+        __typeof(prec->val) v = prec->val;
 
         write_from_field((dbCommon*)prec, priv, &v);
     }CATCH(write_lo, prec)
@@ -289,7 +296,10 @@ long write_ao_float(aoRecord* prec)
 MAKEDSET(bi, devPSCRegBi, &init_input<biRecord>, &get_iointr_info, &read_binary<biRecord>);
 MAKEDSET(mbbi, devPSCRegMbbi, &init_input<mbbiRecord>, &get_iointr_info, &read_binary<mbbiRecord>);
 MAKEDSET(mbbiDirect, devPSCRegMbbiDirect, &init_input<mbbiDirectRecord>, &get_iointr_info, &read_binary<mbbiDirectRecord>);
-MAKEDSET(longin, devPSCRegLi, &init_input<longinRecord>, &get_iointr_info, &read_li);
+MAKEDSET(longin, devPSCRegLi, &init_input<longinRecord>, &get_iointr_info, &read_to_val<longinRecord>);
+#ifdef PSCDRV_USE64
+  MAKEDSET(int64in, devPSCRegI64i, &init_input<int64inRecord>, &get_iointr_info, &read_to_val<int64inRecord>);
+#endif
 MAKEDSET(ai, devPSCRegAi, &init_input<aiRecord>, &get_iointr_info, &read_ai);
 MAKEDSET(ai, devPSCRegF32Ai, &init_input<aiRecord>, &get_iointr_info, &read_ai_float<float>);
 MAKEDSET(ai, devPSCRegF64Ai, &init_input<aiRecord>, &get_iointr_info, &read_ai_float<double>);
@@ -298,7 +308,10 @@ MAKEDSET(ai, devPSCRegF64Ai, &init_input<aiRecord>, &get_iointr_info, &read_ai_f
 MAKEDSET(bi, devPSCRegRBBi, &init_rb<biRecord>, NULL, &read_binary<biRecord>);
 MAKEDSET(mbbi, devPSCRegRBMbbi, &init_rb<mbbiRecord>, NULL, &read_binary<mbbiRecord>);
 MAKEDSET(mbbiDirect, devPSCRegRBMbbiDirect, &init_rb<mbbiDirectRecord>, NULL, &read_binary<mbbiDirectRecord>);
-MAKEDSET(longin, devPSCRegRBLi, &init_rb<longinRecord>, NULL, &read_li);
+MAKEDSET(longin, devPSCRegRBLi, &init_rb<longinRecord>, NULL, &read_to_val<longinRecord>);
+#ifdef PSCDRV_USE64
+  MAKEDSET(int64in, devPSCRegRBI64i, &init_rb<int64inRecord>, NULL, &read_to_val<int64inRecord>);
+#endif
 MAKEDSET(ai, devPSCRegRBAi, &init_rb<aiRecord>, NULL, &read_ai);
 MAKEDSET(ai, devPSCRegRBF32Ai, &init_rb<aiRecord>, NULL, &read_ai_float<float>);
 MAKEDSET(ai, devPSCRegRBF64Ai, &init_rb<aiRecord>, NULL, &read_ai_float<double>);
@@ -307,7 +320,10 @@ MAKEDSET(ai, devPSCRegRBF64Ai, &init_rb<aiRecord>, NULL, &read_ai_float<double>)
 MAKEDSET(bo, devPSCRegBo, &init_output<boRecord>, NULL, &write_binary<boRecord>);
 MAKEDSET(mbbo, devPSCRegMbbo, &init_output<mbboRecord>, NULL, &write_binary<mbboRecord>);
 MAKEDSET(mbboDirect, devPSCRegMbboDirect, &init_output<mbboDirectRecord>, NULL, &write_binary<mbboDirectRecord>);
-MAKEDSET(longout, devPSCRegLo, &init_output<longoutRecord>, NULL, &write_lo);
+MAKEDSET(longout, devPSCRegLo, &init_output<longoutRecord>, NULL, &write_from_val<longoutRecord>);
+#ifdef PSCDRV_USE64
+  MAKEDSET(int64out, devPSCRegI64o, &init_output<int64outRecord>, NULL, &write_from_val<int64outRecord>);
+#endif
 MAKEDSET(ao, devPSCRegAo, &init_output<aoRecord>, NULL, &write_ao);
 MAKEDSET(ao, devPSCRegF32Ao, &init_output<aoRecord>, NULL, &write_ao_float<float>);
 MAKEDSET(ao, devPSCRegF64Ao, &init_output<aoRecord>, NULL, &write_ao_float<double>);
@@ -320,6 +336,9 @@ epicsExportAddress(dset, devPSCRegBi);
 epicsExportAddress(dset, devPSCRegMbbi);
 epicsExportAddress(dset, devPSCRegMbbiDirect);
 epicsExportAddress(dset, devPSCRegLi);
+#ifdef PSCDRV_USE64
+  epicsExportAddress(dset, devPSCRegI64i);
+#endif
 epicsExportAddress(dset, devPSCRegAi);
 epicsExportAddress(dset, devPSCRegF32Ai);
 epicsExportAddress(dset, devPSCRegF64Ai);
@@ -328,6 +347,9 @@ epicsExportAddress(dset, devPSCRegRBBi);
 epicsExportAddress(dset, devPSCRegRBMbbi);
 epicsExportAddress(dset, devPSCRegRBMbbiDirect);
 epicsExportAddress(dset, devPSCRegRBLi);
+#ifdef PSCDRV_USE64
+  epicsExportAddress(dset, devPSCRegRBI64i);
+#endif
 epicsExportAddress(dset, devPSCRegRBAi);
 epicsExportAddress(dset, devPSCRegRBF32Ai);
 epicsExportAddress(dset, devPSCRegRBF64Ai);
@@ -336,6 +358,9 @@ epicsExportAddress(dset, devPSCRegBo);
 epicsExportAddress(dset, devPSCRegMbbo);
 epicsExportAddress(dset, devPSCRegMbboDirect);
 epicsExportAddress(dset, devPSCRegLo);
+#ifdef PSCDRV_USE64
+  epicsExportAddress(dset, devPSCRegI64o);
+#endif
 epicsExportAddress(dset, devPSCRegAo);
 epicsExportAddress(dset, devPSCRegF32Ao);
 epicsExportAddress(dset, devPSCRegF64Ao);
