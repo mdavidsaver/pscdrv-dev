@@ -22,7 +22,7 @@ struct event_base;
 struct event;
 
 class EventBase
-        :public epicsThreadRunable
+        :private epicsThreadRunable
         ,public std::tr1::enable_shared_from_this<EventBase>
 {
     event_base *base;
@@ -33,7 +33,9 @@ class EventBase
 
     EventBase();
 
+private:
     virtual void run();
+public:
 
     void stop();
 
