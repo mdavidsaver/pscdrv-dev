@@ -5,8 +5,6 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/devcommon.h"
-
 #include <stdexcept>
 #include <algorithm>
 #include <sstream>
@@ -16,6 +14,9 @@
 #include <longinRecord.h>
 #include <longoutRecord.h>
 #include <stringinRecord.h>
+
+#define epicsExportSharedSymbols
+#include "psc/devcommon.h"
 
 recAlarm::recAlarm()
     :status(COMM_ALARM)

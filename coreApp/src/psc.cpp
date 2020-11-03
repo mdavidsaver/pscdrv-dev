@@ -5,8 +5,6 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/device.h"
-
 #include <stdexcept>
 #include <memory>
 #include <cstring>
@@ -18,6 +16,9 @@
 
 #include <event2/buffer.h>
 #include <event2/util.h>
+
+#define epicsExportSharedSymbols
+#include "psc/device.h"
 
 #define HEADER_SIZE 8
 /* The minimum high-water mark for the receive buffer.

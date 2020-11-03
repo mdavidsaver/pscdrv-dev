@@ -5,8 +5,6 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/devcommon.h"
-
 #include <stdio.h>
 
 #include <osiSock.h>
@@ -21,10 +19,23 @@
 
 #include <menuConvert.h>
 
+#define epicsExportSharedSymbols
+#include "psc/devcommon.h"
+
+#ifdef epicsExportSharedSymbols
+#   define dev_epicsExportSharedSymbols
+#   undef epicsExportSharedSymbols
+#endif
+
 #ifdef PSCDRV_USE64
 #  include <int64inRecord.h>
 #  include <int64outRecord.h>
 #endif
+
+#ifdef dev_epicsExportSharedSymbols
+#   define epicsExportSharedSymbols
+#endif
+#include "shareLib.h"
 
 #include "utilpvt.h"
 

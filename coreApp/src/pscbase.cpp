@@ -5,8 +5,6 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/device.h"
-
 #include <drvSup.h>
 #include <initHooks.h>
 
@@ -19,6 +17,9 @@
 #include <event2/thread.h>
 
 #include <epicsExit.h>
+
+#define epicsExportSharedSymbols
+#include "psc/device.h"
 
 #include "utilpvt.h"
 

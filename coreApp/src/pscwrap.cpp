@@ -5,9 +5,10 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/device.h"
-
 #include <errlog.h>
+
+#define epicsExportSharedSymbols
+#include "psc/device.h"
 
 #define CATCH(NAME) catch(std::exception& e) {errlogPrintf("%s: " #NAME " error: %s\n", psc->name.c_str(), e.what());}
 

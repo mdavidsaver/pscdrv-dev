@@ -5,10 +5,11 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/devcommon.h"
-
 #include <stringinRecord.h>
 #include <stringoutRecord.h>
+
+#define epicsExportSharedSymbols
+#include "psc/devcommon.h"
 
 #include "utilpvt.h"
 

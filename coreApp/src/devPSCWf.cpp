@@ -5,13 +5,14 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/devcommon.h"
-
 #include <stdio.h>
 #include <arpa/inet.h>
 
 #include <menuFtype.h>
 #include <waveformRecord.h>
+
+#define epicsExportSharedSymbols
+#include "psc/devcommon.h"
 
 #include "utilpvt.h"
 

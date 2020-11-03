@@ -5,17 +5,20 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
-#include "psc/evbase.h"
-
 #include <string.h>
 
 #include <stdexcept>
 #include <cstdio>
 
 #include <epicsGuard.h>
+#include <epicsThread.h>
+#include <epicsMutex.h>
 
 #include <event2/event.h>
 #include <event2/buffer.h>
+
+#define epicsExportSharedSymbols
+#include "psc/evbase.h"
 
 std::tr1::weak_ptr<EventBase> EventBase::last_base;
 

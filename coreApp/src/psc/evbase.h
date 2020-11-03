@@ -18,10 +18,12 @@
 
 #include "util.h"
 
+#include <shareLib.h>
+
 struct event_base;
 struct event;
 
-class EventBase
+class epicsShareClass EventBase
         :private epicsThreadRunable
         ,public std::tr1::enable_shared_from_this<EventBase>
 {
