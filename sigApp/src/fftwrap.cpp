@@ -16,6 +16,11 @@
 
 #include "fftwrap.h"
 
+#include <epicsExport.h>
+
+int PSCPSDDebug;
+epicsExportAddress(int, PSCPSDDebug);
+
 PSDCalc::PSDCalc()
     :totalpowertime(0.0)
     ,totalpowerfreq(0.0)

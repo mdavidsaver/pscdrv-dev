@@ -17,6 +17,8 @@
 #include <errlog.h>
 #include <dbScan.h>
 
+extern int PSCPSDDebug;
+
 /* performance timer */
 struct PTimer {
     timespec tstart;
@@ -37,7 +39,7 @@ struct PTimer {
     void maybeSnap(const char *msg, double threshold=0.0)
     {
         double interval = snap();
-        if(interval>threshold) {
+        if(PSCPSDDebug && interval>threshold) {
             errlogPrintf("%s over threshold %f > %f\n", msg, interval, threshold);
         }
     }
