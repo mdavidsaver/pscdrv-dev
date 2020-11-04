@@ -140,7 +140,6 @@ public:
     virtual void queueSend(Block*, const void*, epicsUInt32);
 
     virtual void connect()=0;
-    virtual void stop();
     virtual void flushSend()=0;
     virtual void forceReConnect()=0;
 
@@ -159,8 +158,6 @@ protected:
     static pscmap_t pscmap;
 
 public:
-    static void ioc_atexit(void*);
-
     static void startAll();
     static PSCBase* getPSCBase(const std::string&);
     template<typename T>
@@ -220,8 +217,12 @@ private:
     // libevent callbacks
     void eventcb(short);
     void recvdata();
-    virtual void stop() override;
     void reconnect();
+
+public:
+    // atexit
+    void stop();
+private:
 
     static void bev_eventcb(bufferevent*,short,void*);
     static void bev_datacb(bufferevent*, void*);

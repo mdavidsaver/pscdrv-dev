@@ -57,8 +57,6 @@ PSCBase::PSCBase(const std::string &name,
     scanIoInit(&scan);
 
     pscmap[name] = this;
-
-    epicsAtExit(&ioc_atexit, (void*)this);
 }
 
 PSCBase::~PSCBase()
@@ -155,8 +153,6 @@ void PSCBase::queueSend(Block* blk, const void* buf, epicsUInt32 buflen)
         timefprintf(stderr, "%s: enqueue block %u %lu bytes\n",
                 name.c_str(), blk->code, (unsigned long)buflen);
 }
-
-void PSCBase::stop() {}
 
 void PSCBase::startAll()
 {

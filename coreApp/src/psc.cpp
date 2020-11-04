@@ -13,6 +13,7 @@
 
 #include <errlog.h>
 #include <dbAccess.h>
+#include <epicsExit.h>
 
 #include <event2/buffer.h>
 #include <event2/util.h>
@@ -26,6 +27,30 @@
  */
 static const size_t min_max_buf_size = 1024*1024;
 
+namespace {
+
+struct exitinfo {
+    event_base *base;
+    PSC *psc;
+};
+
+void psc_real_exit(evutil_socket_t, short, void *raw)
+{
+    exitinfo *info = (exitinfo*)raw;
+    // finally cleanup
+    info->psc->stop();
+    delete info;
+}
+
+void psc_exit(void *raw)
+{
+    // call from (probably) the main thread
+    exitinfo *info = (exitinfo*)raw;
+    // jump to the event loop worker also syncs
+    event_base_once(info->base, -1, EV_TIMEOUT, &psc_real_exit, info, 0);
+}
+
+} // namespace
 
 PSC::PSC(const std::string &name,
          const std::string &host,
@@ -47,6 +72,11 @@ PSC::PSC(const std::string &name,
     dns = evdns_base_new(eb, 1);
     if(!reconnect_timer || !dns || !sendbuf)
         throw std::bad_alloc();
+
+    exitinfo *info = new exitinfo;
+    info->base = base->get();
+    info->psc = this;
+    epicsAtExit(&psc_exit, info);
 }
 
 PSC::~PSC()
