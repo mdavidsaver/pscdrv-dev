@@ -29,7 +29,6 @@ ifdef BASE_7_0
 PSCDBD = ../pscCore-new.dbd
 else
 PSCDBD = ../pscCore-old.dbd
-$(error oops)
 endif
 
 #===========================
