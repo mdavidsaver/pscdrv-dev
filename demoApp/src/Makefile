@@ -15,12 +15,16 @@ DBD += pscdemo.dbd
 # demo.dbd will be made up from these files:
 pscdemo_DBD += base.dbd
 pscdemo_DBD += pscCore.dbd
+ifdef BASE_7_0
 pscdemo_DBD += PVAServerRegister.dbd
 pscdemo_DBD += qsrv.dbd
+endif
 
 pscdemo_LIBS += pscCore
+ifdef BASE_7_0
 pscdemo_LIBS += qsrv
 pscdemo_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
+endif
 
 # pscdemo_registerRecordDeviceDriver.cpp derives from pscdemo.dbd
 pscdemo_SRCS += pscdemo_registerRecordDeviceDriver.cpp
