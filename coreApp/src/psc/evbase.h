@@ -55,7 +55,7 @@ private:
 
 
 //! Dis-contiguous byte buffer
-class dbuffer
+class epicsShareClass dbuffer
 {
     std::vector<evbuffer_iovec> strides;
     std::vector<char> backingv;
@@ -80,6 +80,7 @@ public:
     }
 
     size_t size() const;
+    size_t nstrides() const { return strides.size(); }
 
     void clear();
     void resize(size_t newlen);

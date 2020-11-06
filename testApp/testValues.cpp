@@ -121,12 +121,87 @@ void test_Raw2EGU(void)
 
 }
 
+void test_dbuffer_contig()
+{
+    dbuffer B(12u);
+    testOk1(B.size()==12u);
+    testOk1(B.nstrides()==1u);
+
+    {
+        const char inp[12] = {1,2,3,4,5,6,7,8,9,10,11,12};
+        testOk1(!!B.copyin(inp, 0, sizeof(inp)));
+
+        char out[12];
+        memset(out, 0xfe, sizeof(out));
+        testOk1(!!B.copyout(out, sizeof(inp)));
+
+        testOk1(memcmp(inp, out, sizeof(out))==0);
+    }
+
+    {
+        const char expect[] = {3,4, 7,8, 11,12};
+        char out[10];
+        memset(out, 0xfe, sizeof(out));
+        testOk1(B.copyout_shape(out, 2, 2, 2, 5)==3);
+
+        testOk1(memcmp(expect, out, sizeof(expect))==0);
+    }
+}
+
+void dummy_cleanup(const void *data, size_t datalen, void *extra)
+{
+    testDiag("Cleanup %p %zu", data, datalen);
+}
+
+void test_dbuffer_discontrig()
+{
+    const char inpA[11] = {1,2,3,4,5,6,7,8,9,10,11};
+    const char inpB[5] = {12,13,14,15,16};
+
+    dbuffer B;
+    {
+        evbuffer *temp = evbuffer_new();
+        if(!temp)
+            testFail("evbuffer_new");
+
+        evbuffer_add_reference(temp, inpA, sizeof(inpA), &dummy_cleanup, 0);
+        evbuffer_add_reference(temp, inpB, sizeof(inpB), &dummy_cleanup, 0);
+
+        B.consume(temp);
+        testOk1(evbuffer_get_length(temp)==0u);
+        evbuffer_free(temp);
+    }
+
+    testOk1(B.size()==16u);
+    testOk1(B.nstrides()==2u);
+
+    {
+        const char expect[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+        char out[16];
+        memset(out, 0xfe, sizeof(out));
+        testOk1(!!B.copyout(out, sizeof(out)));
+
+        testOk1(memcmp(expect, out, sizeof(expect))==0);
+    }
+
+    {
+        const char expect[] = {3,4, 7,8, 11,12, 15,16};
+        char out[16];
+        memset(out, 0xfe, sizeof(out));
+        testOk1(B.copyout_shape(out, 2, 2, 2, sizeof(out)/2u)==4);
+
+        testOk1(memcmp(expect, out, sizeof(expect))==0);
+    }
+}
+
 } // namespace
 
 MAIN(testValues) {
-    testPlan(0);
+    testPlan(43);
     test_bswap();
     test_EGU2Raw();
     test_Raw2EGU();
+    test_dbuffer_contig();
+    test_dbuffer_discontrig();
     return testDone();
 }
