@@ -69,7 +69,7 @@ void received_block(void* raw, Block* block)
         char bytes[sizeof(epicsUInt32)];
     } data;
 
-    if(priv->block->data.copyout(data.bytes, sizeof(data.bytes))) {
+    if(priv->block->data.copyout(data.bytes, 0, sizeof(data.bytes))) {
         return;
     }
 
@@ -80,7 +80,7 @@ void received_block(void* raw, Block* block)
     bool alreadyQueued = !priv->syncData.empty();
 
     priv->syncData.resize(block->data.size());
-    size_t actual = priv->block->data.copyout(&priv->syncData[0], priv->syncData.size());
+    size_t actual = priv->block->data.copyout(&priv->syncData[0], 0, priv->syncData.size());
     priv->syncData.resize(actual); // maybe downsize
 
     if(!alreadyQueued)

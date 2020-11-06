@@ -133,7 +133,7 @@ void test_dbuffer_contig()
 
         char out[12];
         memset(out, 0xfe, sizeof(out));
-        testOk1(!!B.copyout(out, sizeof(inp)));
+        testOk1(!!B.copyout(out, 0, sizeof(inp)));
 
         testOk1(memcmp(inp, out, sizeof(out))==0);
     }
@@ -179,7 +179,7 @@ void test_dbuffer_discontrig()
         const char expect[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
         char out[16];
         memset(out, 0xfe, sizeof(out));
-        testOk1(!!B.copyout(out, sizeof(out)));
+        testOk1(!!B.copyout(out, 0, sizeof(out)));
 
         testOk1(memcmp(expect, out, sizeof(expect))==0);
     }

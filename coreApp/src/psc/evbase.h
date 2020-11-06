@@ -93,8 +93,8 @@ public:
 
     bool copyin(const void *buf, size_t offset, size_t len);
 
-    bool copyout(void *dest, size_t nbytes) const {
-        return copyout_shape(dest, 0u, nbytes, 0u, 1u)==1u;
+    bool copyout(void *dest, size_t offset, size_t nbytes) const {
+        return copyout_shape(dest, offset, nbytes, 0u, 1u)==1u;
     }
     // returns number of elements copied
     size_t copyout_shape(void *dest, size_t offset, size_t esize, size_t eskip, size_t ecount) const;

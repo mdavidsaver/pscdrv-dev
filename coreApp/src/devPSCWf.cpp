@@ -88,8 +88,7 @@ long read_wf_real(waveformRecord* prec)
 
         // HACK: we are copying integers into a double[]
         // this is safe so long as sizeof(T)<=sizeof(double)
-        size_t ncopied = priv->block->data.copyout_shape(prec->bptr, priv->offset, sizeof(T), skip, prec->nelm);
-        size_t nelem = ncopied;
+        size_t nelem = priv->block->data.copyout_shape(prec->bptr, priv->offset, sizeof(T), skip, prec->nelm);
 
         // step backwards since we are expanding the used size of the array
         for(size_t i=nelem; i; i--) {
@@ -121,7 +120,7 @@ long read_wf_bytes(waveformRecord* prec)
             return 0;
         }
 
-        size_t len = priv->block->data.copyout_shape(prec->bptr, priv->offset, prec->nelm, 0u, 1u);
+        size_t len = priv->block->data.copyout(prec->bptr, priv->offset, prec->nelm);
 
         prec->nord = len;
 
