@@ -26,7 +26,9 @@
 #define TEST64 0xffdebc9a78563412ull
 #endif /* EPICS_BYTE_ORDER==EPICS_ENDIAN_BIG */
 
-static void test_bswap(void)
+namespace {
+
+void test_bswap(void)
 {
     epicsUInt8 u8 = 0x42;
     epicsUInt16 u16 = TEST16;
@@ -49,7 +51,7 @@ struct analogRecord {
     epicsInt32 roff;
 };
 
-static void test_EGU2Raw(void)
+void test_EGU2Raw(void)
 {
     analogRecord rec;
 
@@ -88,7 +90,7 @@ static void test_EGU2Raw(void)
     testDblEq(analogEGU2Raw<double>(&rec, -4.0),-50.0);
 }
 
-static void test_Raw2EGU(void)
+void test_Raw2EGU(void)
 {
     analogRecord rec;
 
@@ -118,6 +120,8 @@ static void test_Raw2EGU(void)
     testDblEq(analogRaw2EGU<double>(&rec, -1.1),-1.1);
 
 }
+
+} // namespace
 
 MAIN(testValues) {
     testPlan(0);
