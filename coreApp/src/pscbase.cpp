@@ -135,6 +135,13 @@ void PSCBase::queueSend(Block* blk, const dbuffer& buf)
 {
     queueHeader(blk, blk->code, buf.size());
     buf.copyout(sendbuf);
+
+    blk->queued = true;
+    blk->count++;
+
+    if(PSCDebug>1)
+        timefprintf(stderr, "%s: enqueued block %u %lu bytes\n",
+                name.c_str(), blk->code, (unsigned long)buf.size());
 }
 
 void PSCBase::queueSend(Block* blk, const void* buf, epicsUInt32 buflen)
