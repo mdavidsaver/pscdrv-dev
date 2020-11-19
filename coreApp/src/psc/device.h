@@ -251,6 +251,8 @@ public:
     virtual void forceReConnect() override;
 
 private:
+    void queueHeader(Block* blk, epicsUInt16 id, epicsUInt32 buflen);
+
     sockaddr_in ep;
 
     int socket;
@@ -259,6 +261,11 @@ private:
     typedef std::vector<char> buffer_t;
     std::list<buffer_t> txqueue;
     buffer_t rxscratch;
+
+    typedef std::list<buffer_t> sendbuf_t;
+    sendbuf_t sendbuf, // pending flush
+              txbuf;   // ready to sendto()
+    sendbuf_t readybuf;// a free list
 
     virtual void connect() override;
 

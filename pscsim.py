@@ -1,161 +1,132 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-PSC protocol simulation
-
-Has both client and server modes
-
-$ ./pscsim.py -v --server localhost:8765
-
-and/or
-
-$ ./pscsim.py -v --client localhost:8765
-
-Must have debian package 'python-twisted-core' installed
-"""
+#!/usr/bin/env python3
 
 import logging
-log = logging.getLogger(__name__)
+import time
+import struct
+import signal
+import asyncio
 
-import struct, sys, time
+_log = logging.getLogger(__name__)
 
-from array import array
+def getargs():
+    from argparse import ArgumentParser
+    P = ArgumentParser()
+    P.add_argument('endpoint', help='Bind to address:port')
+    P.add_argument('-v', '--verbose', action='store_const',
+                   const=logging.DEBUG, default=logging.INFO,
+                   help='Make some noise')
+    P.add_argument('-U', '--udp', action='store_true')
+    P.add_argument('-T', '--tcp', action='store_false', dest='udp')
+    return P
 
-from optparse import OptionParser
-from twisted.internet import reactor
-from twisted.protocols.stateful import StatefulProtocol
-from twisted.internet.protocol import Factory, ClientFactory
+def build_msg(msgid, body):
+    blen = len(body)
+    return struct.pack('>2sHI', b'PS', msgid, blen) + body
 
-bswap = sys.byteorder!='big'
+async def tcp_keepalive(writer):
+    peer = writer.get_extra_info('peername')
+    while True:
+        _log.debug('%s ping', peer)
+        writer.write(build_msg(42, b"hello world!"))
+        await writer.drain()
+        await asyncio.sleep(1.0)
 
-header = struct.Struct('>ccHI')
-assert header.size==8
+async def handle_tcp_client(reader, writer):
+    loop = asyncio.get_running_loop()
+    peer = writer.get_extra_info('peername')
+    _log.info('New client %s', peer)
 
-msg = struct.Struct('>HH')
+    pinger = loop.create_task(tcp_keepalive(writer))
+    try:
+        writer.write(build_msg(100, b'\x00\x00\x124\x00\x00\x00*'))
+        writer.write(build_msg(100, b'\x00\x00\x12>\x00\x00\x00+'))
+        await writer.drain()
 
-TS = struct.Struct('>II')
+        while True:
+            P, S, msgid, blen = struct.unpack('>ccHI', await reader.readexactly(8))
+            _log.debug('RX %s msgid %d blen %d', peer, msgid, blen)
 
-class PSCProto(StatefulProtocol):
-    def getInitialState(self):
-        return (self.recv_header, header.size)
-    def recv_header(self, data):
-        log.debug("Head: %u '%s'", len(data), repr(data))
-        P, S, msgid, bodylen = header.unpack(data)
-        if (P,S) != ('P','S'):
-            log.fatal("Framing Error!")
-            self.transport.loseConnection()
+            if P!=b'P' or S!=b'S':
+                raise RuntimeError('Framing error')
+
+            body = await reader.readexactly(blen)
+
+            # Echo back with a different ID (ID+10)
+            if msgid>=1000:
+                # Echo back with a different ID w/ timestamp prepended
+                SEC, NS = divmod(time.time(), 1.0)
+                body = struct.pack('>II', int(SEC), int(NS*1e9)) + body
+
+            msgid += 10
+
+            writer.write(build_msg(msgid, body))
+            await writer.drain()
+
+    except asyncio.IncompleteReadError:
+        pass # normal on close
+    except:
+        _log.exception('Error client %s', peer)
+    finally:
+        pinger.cancel()
+        try:
+            await pinger
+        except asyncio.CancelledError:
+            pass
+    _log.info('Lost client %s', peer)
+
+class UDPProto(object):
+    def connection_made(self, transport):
+        self.transport = transport
+        self.peer = None
+        _log.info('Listening on %s', transport.get_extra_info('sockname'))
+
+    def datagram_received(self, data, addr):
+        P, S, msgid, blen = struct.unpack('>ccHI', data[:8])
+        _log.debug('RX %s msgid %d blen %d', addr, msgid, blen)
+
+        if P!=b'P' or S!=b'S':
+            _log.error('Ignore invalid RX %s msgid %d blen %d', addr, msgid, blen)
             return
-        self.msgid = msgid
-        if bodylen>0:
-            return (self.recv_body, bodylen)
-        else:
-            self.recv_psc(msgid, '')
-    def recv_body(self, data):
-        log.debug("Body: %u '%s'", len(data), repr(data))
-        self.recv_psc(self.msgid, data)
-        return self.getInitialState()
 
-    def send_psc(self, msgid, body):
-        log.debug("Send %u %u", msgid, len(body))
-        head = header.pack('P', 'S', msgid, len(body))
-        self.transport.write(head)
-        self.transport.write(body)
+        body = data[8:8+blen]
 
-    def recv_psc(self, msgid, body):
-        print "Recv %u %u"%(msgid, len(body))
-	print "  ",repr(body[91696:])
+        if addr != self.peer:
+            _log.info('New peer %s -> %s', self.peer, addr)
+            self.peer = addr
 
-class PSCClient(PSCProto):
-    pass
+            self.transport.sendto(build_msg(100, b'\x00\x00\x124\x00\x00\x00*'), addr)
+            self.transport.sendto(build_msg(100, b'\x00\x00\x12>\x00\x00\x00+'), addr)
 
-class PSCServer(PSCProto):
-    reactor = reactor
-    timer = None
-
-    def connectionMade(self):
-        log.info("Connection from %s", self.transport.getPeer())
-        self.timer = self.reactor.callLater(0.0, self.ping)
-        self.val = 1
-        self.resync()
-
-    def connectionLost(self, reason=None):
-        log.info("Disconnect by %s: %s",
-                 self.transport.getPeer(),
-                 str(reason))
-        if self.timer is not None:
-            self.timer.cancel()
-            self.timer=None
-
-    def ping(self):
-        self.send_psc(42, "hello world!")
-
-        arr = array('H', range(1, 20))
-        if bswap:
-            arr.byteswap()
-        self.send_psc(55, arr.tostring())
-
-        self.timer = self.reactor.callLater(1.0, self.ping)
-        self.val = (self.val+1)%0xffff
-
-    def resync(self):
-        log.info("Resync")
-        self.send_psc(100, TS.pack(4660, 42))
-        self.send_psc(100, TS.pack(4670, 43))
-        
-    def recv_psc(self, msgid, body):
         # Echo back with a different ID (ID+10)
         if msgid>=1000:
             # Echo back with a different ID w/ timestamp prepended
-            T = time.time()
-            T = TS.pack(int(T), 0)
-            body = T+body
+            SEC, NS = divmod(time.time(), 1.0)
+            body = struct.pack('>II', int(SEC), int(NS*1e9)) + body
 
-        elif msgid==100: # single register write
-            addr, val = TS.unpack(body)
-            if addr==10 and val!=0:
-                self.resync()
-            
-        log.info("Echo %u %s", msgid, repr(body))
-        self.send_psc(msgid+10, body)
+        msgid += 10
 
+        self.transport.sendto(build_msg(msgid, body), addr)
 
-_V = {0:logging.WARNING, 1:logging.INFO, 2:logging.DEBUG}
+async def main(args):
+    loop = asyncio.get_running_loop()
+    logging.basicConfig(level=args.verbose)
 
-def main():
-    P = OptionParser(usage="%prog [-C|-S] <-v> host:port")
-    P.add_option('-v','--verbose', action='count', default=0,
-                 help='Print more information')
-    P.add_option('-C','--client', action='store_true', default=True,
-                 dest='dir', help='Act as Client to PSC')
-    P.add_option('-S','--server', action='store_false', dest='dir',
-                 help='Act as Server to IOC')
-    vals, args = P.parse_args()
+    host, _sep, port = args.endpoint.partition(':')
+    port = int(port or '1234')
+    _log.info('Binding to %s:%s', host, port)
 
-    if len(args)<1:
-        P.usage()
-        sys.exit(1)
+    if args.udp:
+        sock, proto = await loop.create_datagram_endpoint(lambda: UDPProto(), local_addr=(host, port))
 
-    host, _, port = args[0].partition(':')
-    port = int(port or '6')
-
-    logging.basicConfig(level=_V.get(vals.verbose, 0))
-
-    if vals.dir:
-        # Client
-        log.info('Connect to %s:%u', host, port)
-        fact = ClientFactory()
-        fact.protocol = PSCClient
-        ep = reactor.connectTCP(host, port, fact)
     else:
-        # Server
-        log.info('Serve from %s:%u', host, port)
-        fact = Factory()
-        fact.protocol = PSCServer
-        ep = reactor.listenTCP(port, fact, interface=host or '')
+        sock = await asyncio.start_server(handle_tcp_client, host=host, port=port)
 
-    log.info('Run')
-    reactor.run()
-    log.info('Done')
+    done = asyncio.Event()
+    loop.add_signal_handler(signal.SIGINT, done.set)
+
+    _log.info('Running')
+    await done.wait()
+    _log.info('Done')
 
 if __name__=='__main__':
-    main()
+    asyncio.run(main(getargs().parse_args()))

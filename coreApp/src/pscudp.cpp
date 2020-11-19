@@ -26,7 +26,6 @@ PSCUDP::PSCUDP(const std::string &name,
                unsigned short ifaceport,
                unsigned int timeoutmask)
     :PSCBase(name, host, hostport, timeoutmask)
-    ,evt_tx(NULL)
     ,rxscratch(1024) // must be greater than HEADER_SIZE
 {
     socket = ::socket(AF_INET, SOCK_DGRAM, 0);
@@ -39,8 +38,8 @@ PSCUDP::PSCUDP(const std::string &name,
         evutil_make_socket_closeonexec(socket);
 
         evt_rx = event_new(base->get(), socket, EV_READ|EV_TIMEOUT|EV_PERSIST, &ev_recv, this);
-        //evt_tx = event_new(base, socket, EV_WRITE|EV_TIMEOUT, &ev_send, this);
-        if(!evt_rx)
+        evt_tx = event_new(base->get(), socket, EV_WRITE|EV_TIMEOUT, &ev_send, this);
+        if(!evt_rx || !evt_tx)
             throw std::bad_alloc();
 
         {
@@ -92,7 +91,10 @@ PSCUDP::PSCUDP(const std::string &name,
     }
 }
 
-PSCUDP::~PSCUDP() {}
+PSCUDP::~PSCUDP() {
+    event_free(evt_rx);
+    event_free(evt_tx);
+}
 
 void PSCUDP::connect()
 {
@@ -101,10 +103,63 @@ void PSCUDP::connect()
         throw std::runtime_error("Failed to add Rx event");
 
     connected = true; // UDP socket is always "connected"
+    if(PSCDebug>4)
+        timefprintf(stderr, "%s: \"connected\"\n", name.c_str());
 }
 
 void PSCUDP::senddata(short evt)
-{}
+{
+    if(PSCDebug>4)
+        timefprintf(stderr, "%s: TX wakeup with %u\n", name.c_str(), (unsigned)txbuf.size());
+
+    bool scanme = false;
+
+    if((evt&EV_TIMEOUT) && PSCDebug>0)
+        timefprintf(stderr, "%s: TX timeout with %u\n", name.c_str(), (unsigned)txbuf.size());
+
+    while((evt&EV_WRITE) && !txbuf.empty()) {
+        buffer_t& scratch = txbuf.front();
+
+        ssize_t ret = sendto(socket, &scratch[0], scratch.size(), 0, (sockaddr*)&ep, sizeof(ep));
+
+        if(ret==-1) {
+            if(errno==EAGAIN || errno==EWOULDBLOCK) {
+                // no op, just retry
+            } else {
+                conncount++;
+                message = "Tx socket error: ";
+                message += evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR());
+                scanme = true;
+            }
+            break;
+
+        } else if(scratch.size()!=(size_t)ret) {
+            conncount++;
+            message = "Tx socket truncate";
+            scanme = true;
+        }
+
+        if(readybuf.size()<64u) {
+            // reuse packet buffer
+            readybuf.splice(readybuf.end(),
+                            txbuf,
+                            txbuf.begin());
+
+        } else {
+            readybuf.pop_front();
+        }
+    }
+
+    if(!txbuf.empty()) {
+        // try again
+        timeval timeout = {5,0};
+        if(event_add(evt_tx, &timeout))
+            throw std::runtime_error("Failed to add Tx event");
+    }
+
+    if(scanme)
+        scanIoRequest(scan);
+}
 
 void PSCUDP::recvdata(short evt)
 {
@@ -219,10 +274,96 @@ void PSCUDP::recvdata(short evt)
                     name.c_str(), npkt, nloop);
 }
 
-// TODO: send not implemented
-void PSCUDP::flushSend() {}
-void PSCUDP::queueSend(epicsUInt16, const void*, epicsUInt32) {}
-void PSCUDP::queueSend(Block*, const dbuffer&) {}
-void PSCUDP::queueSend(Block *, const void *, epicsUInt32) {}
+void PSCUDP::flushSend()
+{
+    if(!connected)
+        return;
+    if(PSCDebug>1)
+        timefprintf(stderr, "%s: flush %u -> %u\n",
+                    name.c_str(), (unsigned)sendbuf.size(), (unsigned)txbuf.size());
+
+    if(txbuf.size() >= 64u)
+        throw std::runtime_error("Sending message would exceed buffer");
+
+    txbuf.splice(txbuf.end(),
+                 sendbuf);
+
+    for(block_map::const_iterator it = send_blocks.begin(), end = send_blocks.end();
+        it!=end; ++it)
+    {
+        it->second->queued = false;
+    }
+
+    timeval timeout = {5,0};
+    if(event_add(evt_tx, &timeout))
+        throw std::runtime_error("Failed to add Tx event");
+}
+
+void PSCUDP::queueHeader(Block* blk, epicsUInt16 id, epicsUInt32 buflen)
+{
+    // arbitrary limit on the number of queued packets
+    if(sendbuf.size()>=64u)
+        throw std::runtime_error("UDP send queue limit exceeded");
+
+    if(readybuf.empty()) {
+        sendbuf.push_back(buffer_t());
+
+    } else {
+        // append from free list (reuse buffer_t reservation)
+        sendbuf.splice(sendbuf.end(),
+                       readybuf,
+                       readybuf.begin());
+    }
+
+    buffer_t& scratch = sendbuf.back();
+
+    scratch.resize(8u + buflen);
+
+    scratch[0] = 'P';
+    scratch[1] = 'S';
+    *(epicsUInt16*)(&scratch[2]) = htons(blk->code);
+    *(epicsUInt32*)(&scratch[4]) = htonl(buflen);
+}
+
+void PSCUDP::queueSend(epicsUInt16 id, const void* buf, epicsUInt32 buflen)
+{
+    Block *blk = getSend(id);
+    queueSend(blk, buf, buflen);
+}
+
+void PSCUDP::queueSend(Block* blk, const dbuffer& buf)
+{
+    queueHeader(blk, blk->code, buf.size());
+
+    buffer_t& scratch = sendbuf.back();
+    assert(scratch.size() == 8u + buf.size());
+
+    buf.copyout(&scratch[8], 0, buf.size());
+
+    blk->queued = true;
+    blk->count++;
+
+    if(PSCDebug>1)
+        timefprintf(stderr, "%s: enqueued block %u %lu bytes\n",
+                name.c_str(), blk->code, (unsigned long)buf.size());
+}
+
+void PSCUDP::queueSend(Block* blk, const void* buf, epicsUInt32 buflen)
+{
+    queueHeader(blk, blk->code, buflen);
+
+    buffer_t& scratch = sendbuf.back();
+    assert(scratch.size() == 8u + buflen);
+
+    memcpy(&scratch[8], buf, buflen);
+
+    blk->queued = true;
+    blk->count++;
+
+    if(PSCDebug>1)
+        timefprintf(stderr, "%s: enqueue block %u %lu bytes\n",
+                name.c_str(), blk->code, (unsigned long)buflen);
+}
+
 void PSCUDP::forceReConnect() {}
 
