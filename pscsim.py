@@ -129,4 +129,13 @@ async def main(args):
     _log.info('Done')
 
 if __name__=='__main__':
+    if not hasattr(asyncio, 'run'):
+        def run(coro):
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(coro)
+
+        asyncio.run = run
+        # we only use one loop, so this is equivalent
+        asyncio.get_running_loop = asyncio.get_event_loop
+
     asyncio.run(main(getargs().parse_args()))
