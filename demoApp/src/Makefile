@@ -15,13 +15,13 @@ DBD += pscdemo.dbd
 # demo.dbd will be made up from these files:
 pscdemo_DBD += base.dbd
 pscdemo_DBD += pscCore.dbd
-ifdef BASE_7_0
+ifdef EPICS_QSRV_MAJOR_VERSION
 pscdemo_DBD += PVAServerRegister.dbd
 pscdemo_DBD += qsrv.dbd
 endif
 
 pscdemo_LIBS += pscCore
-ifdef BASE_7_0
+ifdef EPICS_QSRV_MAJOR_VERSION
 pscdemo_LIBS += qsrv
 pscdemo_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
 endif
