@@ -51,7 +51,6 @@ PSCBase::PSCBase(const std::string &name,
     ,connected(false)
     ,ukncount(0)
     ,conncount(0)
-    ,sendbuf(evbuffer_new())
     ,message("Initialize")
 {
     scanIoInit(&scan);
@@ -61,7 +60,6 @@ PSCBase::PSCBase(const std::string &name,
 
 PSCBase::~PSCBase()
 {
-    evbuffer_free(sendbuf);
 }
 
 Block* PSCBase::getSend(epicsUInt16 block)
@@ -93,72 +91,6 @@ void PSCBase::send(epicsUInt16 bid)
     Block *block = it->second;
 
     queueSend(block, block->data);
-}
-
-void PSCBase::queueHeader(Block* blk, epicsUInt16 id, epicsUInt32 buflen)
-{
-    if(!connected)
-        return;
-
-    if(blk->queued)
-        throw recAlarm();
-
-    const unsigned hsize=8;
-    char hbuf[hsize];
-
-    hbuf[0] = 'P';
-    hbuf[1] = 'S';
-    *(epicsUInt16*)(hbuf+2) = htons(blk->code);
-    *(epicsUInt32*)(hbuf+4) = htonl(buflen);
-
-    if(PSCMaxSendBuffer>0 &&
-       evbuffer_get_length(sendbuf)>=(size_t)PSCMaxSendBuffer)
-        throw std::runtime_error("Enqueuing message would exceed buffer");
-
-    if(evbuffer_expand(sendbuf, hsize+buflen))
-        throw std::runtime_error("Unable to enqueue message.  Insufficient memory.");
-
-    int err = evbuffer_add(sendbuf, hbuf, hsize);
-
-    // calling evbuffer_expand should ensure the adds never fails
-    assert(!err);
-}
-
-/* add a new message to the send queue */
-void PSCBase::queueSend(epicsUInt16 id, const void* buf, epicsUInt32 buflen)
-{
-    Block *blk = getSend(id);
-    queueSend(blk, buf, buflen);
-}
-
-void PSCBase::queueSend(Block* blk, const dbuffer& buf)
-{
-    queueHeader(blk, blk->code, buf.size());
-    buf.copyout(sendbuf);
-
-    blk->queued = true;
-    blk->count++;
-
-    if(PSCDebug>1)
-        timefprintf(stderr, "%s: enqueued block %u %lu bytes\n",
-                name.c_str(), blk->code, (unsigned long)buf.size());
-}
-
-void PSCBase::queueSend(Block* blk, const void* buf, epicsUInt32 buflen)
-{
-    queueHeader(blk, blk->code, buflen);
-
-    int err = evbuffer_add(sendbuf, buf, buflen);
-
-    // calling evbuffer_expand should ensure the adds never fail
-    assert(!err);
-
-    blk->queued = true;
-    blk->count++;
-
-    if(PSCDebug>1)
-        timefprintf(stderr, "%s: enqueue block %u %lu bytes\n",
-                name.c_str(), blk->code, (unsigned long)buflen);
 }
 
 void PSCBase::startAll()

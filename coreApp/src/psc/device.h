@@ -115,8 +115,6 @@ protected:
     epicsUInt32 ukncount; // RX counter for unknown blocks
     epicsUInt32 conncount; // # of successful connections
 
-    evbuffer *sendbuf;
-
     block_map send_blocks, recv_blocks;
 
 public:
@@ -131,13 +129,10 @@ public:
     Block* getSend(epicsUInt16);
     Block* getRecv(epicsUInt16);
 
-private:
-    void queueHeader(Block* blk, epicsUInt16 id, epicsUInt32 buflen);
-public:
     void send(epicsUInt16);
-    void queueSend(epicsUInt16, const void*, epicsUInt32);
-    void queueSend(Block*, const dbuffer&);
-    virtual void queueSend(Block*, const void*, epicsUInt32);
+    virtual void queueSend(epicsUInt16, const void*, epicsUInt32) =0;
+    virtual void queueSend(Block*, const dbuffer&) =0;
+    virtual void queueSend(Block*, const void*, epicsUInt32) =0;
 
     virtual void connect()=0;
     virtual void flushSend()=0;
@@ -200,6 +195,13 @@ public:
     virtual void forceReConnect() override;
 
     virtual void report(int lvl) override;
+
+private:
+    void queueHeader(Block* blk, epicsUInt16 id, epicsUInt32 buflen);
+public:
+    virtual void queueSend(epicsUInt16, const void*, epicsUInt32) override final;
+    virtual void queueSend(Block*, const dbuffer&) override final;
+    virtual void queueSend(Block*, const void*, epicsUInt32) override final;
 private:
 
     // RX message decoding
@@ -208,6 +210,8 @@ private:
     epicsUInt32 bodylen;
     Block *bodyblock;
     size_t expect;
+
+    evbuffer *sendbuf;
 
     void sendblock(Block*);
 
@@ -239,7 +243,9 @@ public:
            unsigned int timeoutmask);
     virtual ~PSCUDP();
 
-    virtual void queueSend(Block*, const void*, epicsUInt32) override;
+    virtual void queueSend(epicsUInt16, const void*, epicsUInt32) override final;
+    virtual void queueSend(Block*, const dbuffer&) override final;
+    virtual void queueSend(Block*, const void*, epicsUInt32) override final;
 
     virtual void flushSend() override;
     virtual void forceReConnect() override;

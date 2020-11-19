@@ -221,6 +221,8 @@ void PSCUDP::recvdata(short evt)
 
 // TODO: send not implemented
 void PSCUDP::flushSend() {}
+void PSCUDP::queueSend(epicsUInt16, const void*, epicsUInt32) {}
+void PSCUDP::queueSend(Block*, const dbuffer&) {}
 void PSCUDP::queueSend(Block *, const void *, epicsUInt32) {}
 void PSCUDP::forceReConnect() {}
 
