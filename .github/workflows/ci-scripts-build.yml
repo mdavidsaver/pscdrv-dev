@@ -1,0 +1,55 @@
+name: PSC Driver
+
+on: [push, pull_request]
+
+env:
+  SETUP_PATH: .ci-local
+  CMP: gcc
+
+jobs:
+  build-linux:
+    name: ${{ matrix.configuration }} / ${{ matrix.os }} / ${{ matrix.base }}
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      BCFG: ${{ matrix.configuration }}
+      BASE: ${{ matrix.base }}
+      EXTRA: ${{ matrix.extra }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            extra: ""
+            configuration: static
+            base: "7.0"
+
+          - os: ubuntu-20.04
+            extra: "CMD_CXXFLAGS=-std=c++11 -Wall -Werror"
+            configuration: default
+            base: "7.0"
+
+          - os: ubuntu-20.04
+            extra: ""
+            configuration: default
+            base: "3.15"
+
+          - os: ubuntu-16.04
+            extra: ""
+            configuration: default
+            base: "3.14"
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Install system dependencies
+      run: sudo apt-get -y install libevent-dev
+    - name: Prepare and compile dependencies
+      run: python .ci/cue.py prepare
+    - name: Build main module
+      run: python .ci/cue.py build
+    - name: Run main module tests
+      run: python .ci/cue.py test
+    - name: Collect and show test results
+      run: python .ci/cue.py test-results
