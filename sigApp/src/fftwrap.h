@@ -66,7 +66,7 @@ public:
     inline const_pointer address(const_reference x) const { return &x; }
     inline size_type max_size()const {return ((size_t)-1)/sizeof(T);}
 
-    inline void construct(pointer p, const_reference &val);
+    inline void construct(pointer p, const_reference val);
 
     inline void destroy(pointer p)
     {p->~T();}
@@ -83,11 +83,11 @@ public:
 };
 
 template<>
-inline void FFTWAllocator<double>::construct(pointer p, const_reference &val)
+inline void FFTWAllocator<double>::construct(pointer p, const_reference val)
 {::new((void*)p) double(val);}
 
 template<>
-inline void FFTWAllocator<fftw_complex>::construct(pointer p, const_reference &val)
+inline void FFTWAllocator<fftw_complex>::construct(pointer p, const_reference val)
 {
     (*p)[0] = val[0];
     (*p)[1] = val[1];
