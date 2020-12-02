@@ -185,9 +185,10 @@ void dbuffer::consume(evbuffer *buf, size_t len)
     temp.strides.resize(2u);
 
     while(true) {
-        size_t nstrides = evbuffer_peek(temp.backingb, -1, 0u, &temp.strides[0], temp.strides.size());
+        size_t nstrides = evbuffer_peek(temp.backingb, len, 0u, &temp.strides[0], temp.strides.size());
 
         if(nstrides <= temp.strides.size()) {
+            temp.strides.resize(nstrides);
             break;
         }
 
