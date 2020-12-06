@@ -1,1 +1,4 @@
-_build
+/xml/
+/html/
+/_build
+*.tmp
