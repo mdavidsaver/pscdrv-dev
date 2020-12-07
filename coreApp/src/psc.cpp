@@ -294,7 +294,6 @@ void PSC::recvdata()
 
             header = ntohs(*(epicsUInt16*)(hbuf+2));
             bodylen = ntohl(*(epicsUInt32*)(hbuf+4));
-            have_head = true;
 
             block_map::const_iterator it=recv_blocks.find(header);
             if(it!=recv_blocks.end()) {
@@ -310,11 +309,19 @@ void PSC::recvdata()
                 ukncount++;
             }
 
+            if(bodylen) {
+                have_head = true;
+                expect = bodylen;
+
+            } else {
+                have_head = false;
+                bodyblock = NULL;
+                expect = HEADER_SIZE;
+            }
+
             if(PSCDebug>2)
                 timefprintf(stderr, "%s: expect block %u with %lu bytes\n",
                         name.c_str(), header, (unsigned long)bodylen);
-
-            expect = bodylen;
 
         } else { /* decode body */
 
