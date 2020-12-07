@@ -6,3 +6,4 @@ lib/
 envPaths
 *.local
 O.*
+/iocBoot/*/as/

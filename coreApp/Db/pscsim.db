@@ -55,6 +55,7 @@ record(stringout, "$(P)speak") {
   field(DTYP, "PSC Block")
   field(OUT , "@test 1015")
   field(FLNK, "$(P)send")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(longin, "$(P)cnt:hear") {
@@ -76,6 +77,7 @@ record(waveform, "$(P)wfout") {
   field(FTVL, "DOUBLE")
   field(NELM, "10")
   field(FLNK, "$(P)send")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(waveform, "$(P)wfin") {
@@ -92,6 +94,7 @@ record(waveform, "$(P)wfout2") {
   field(FTVL, "DOUBLE")
   field(NELM, "10")
   field(FLNK, "$(P)send")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(waveform, "$(P)wfin2") {
@@ -108,6 +111,7 @@ record(waveform, "$(P)wfout3") {
   field(FTVL, "CHAR")
   field(NELM, "10")
   field(FLNK, "$(P)send")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(waveform, "$(P)wfin3") {
@@ -124,6 +128,7 @@ record(waveform, "$(P)wfout4") {
   field(FTVL, "DOUBLE")
   field(NELM, "10")
   field(FLNK, "$(P)send")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(waveform, "$(P)wfin4") {
@@ -182,22 +187,26 @@ record(longout, "$(P)regsend") {
 record(longout, "$(P)reg0-SP") {
   field(DTYP, "PSC Reg")
   field(OUT , "@test 1")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(longout, "$(P)reg1-SP") {
   field(DTYP, "PSC Reg")
   field(OUT , "@test 1 4")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(longout, "$(P)reg2-SP") {
   field(DTYP, "PSC Reg")
   field(OUT , "@test 1 8")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(ao, "$(P)reg4-SP") {
   field(DTYP, "PSC Reg F32")
   field(OUT , "@test 1 16")
   field(PREC, "3")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(longin, "$(P)reg0-I") {
@@ -237,6 +246,7 @@ record(bo, "$(P)reg3:0-Sel") {
   field(MASK, "0x40000") # bit 18
   field(ZNAM, "False")
   field(ONAM, "True")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(mbbo, "$(P)reg3:1-Sel") {
@@ -252,6 +262,7 @@ record(mbbo, "$(P)reg3:1-Sel") {
   field(ONVL, "1")
   field(TWVL, "2")
   field(THVL, "3")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(bi, "$(P)reg3:0-Sts") {
@@ -304,7 +315,7 @@ record(longout, "$(P)write0-SP") {
   field(DTYP, "PSC Single I32")
   field(OUT , "@test 100 4660")
   field(FLNK, "$(P)send")
-  info(SYNC, "SAME")
+  info(autosaveFields_pass0, "VAL")
 }
 
 record(ao, "$(P)write1-SP") {
