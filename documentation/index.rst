@@ -30,6 +30,7 @@ Contents:
    :maxdepth: 2
 
    protocol
+   building
    processing
    devsup
 

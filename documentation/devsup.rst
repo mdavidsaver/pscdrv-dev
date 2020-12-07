@@ -33,6 +33,24 @@ A record with this support can be combined with a calcoutRecord with OOPT="Trans
 to process some records each time the connection is (re)esstablish.
 This might be used to (re)synchronize the device to match the IOC state when recovering from a power loss.
 
+PSC On Connect
+""""""""""""""
+
+A binary "status" meant to SCAN="I/O Intr" each time a device becomes connected.
+Intended to trigger scans to synchronize IOC and device after (re)connect. ::
+
+    record(bi, "$(P)onconn") {
+        field(DTYP, "PSC On Connect")
+        field(INP , "@$(NAME)")
+        field(SCAN, "I/O Intr")
+        field(FLNK, "$(P)onconn:1")
+    }
+    record(fanout, "$(P)onconn:1") {
+        ... # eg. write some registers
+        field(LNKF, "$(P)Send") # flush
+    }
+
+
 PSC Ctrl Message
 """"""""""""""""
 
@@ -65,13 +83,120 @@ PSC Ctrl Send
 A longout record which queues the buffer for a single message ID to be sent.
 See Driver Data Flow.
 The message ID to be queued is taken from the VAL field, which must be in the range [0,65535].
-This can either be set in the database file, or at runtime by modifiying the VAL field.
+This can either be set in the database file, or at runtime by modifiying the VAL field. ::
+
+    record(longout, "$(P)Send:42") {
+        field(DTYP, "PSC Ctrl Send")
+        field(OUT , "@$(NAME)")
+        field(VAL , "42") # message ID
+        field(FLNK, "$(P)Send")
+    }
 
 PSC Ctrl Send All
 """""""""""""""""
 
 A bo record which flushes the queued send buffer to the socket send buffer.
-See Driver Data Flow.
+See Driver Data Flow. ::
+
+    record(bo, "$(P)Send") {
+        field(DTYP, "PSC Ctrl Send All")
+        field(OUT , "@$(NAME)")
+        field(ZNAM, "Send")
+        field(ONAM, "Send")
+    }
+
+Register Block Access
+---------------------
+
+Individual values may be read/written to messages using DTYP="PSC Reg".
+eg. longin reads 4 bytes as a signed 32-bit integer. ::
+
+    record(longin, "$(P)reg1-I") {
+        field(DTYP, "PSC Reg")
+        field(INP , "@$(NAME) 11 4") # message id 11, offset 4 bytes
+        field(SCAN, "I/O Intr")
+        field(TSE , "-2") # record TIME <- RX time
+    }
+
+When using an output record with DTYP="PSC Reg", keep in mind that record processing stores the value
+in an internal scratch buffer.
+This may be repeated for multiple offsets, in order to populate a message.
+Then the message needs to beto be queued with a DTYP="PSC Ctrl Send" record, as described above. ::
+
+    record(longout, "$(P)reg1-SP") {
+        field(DTYP, "PSC Reg")
+        field(OUT , "@test 42 4")
+        field(FLNK, "$(P)Send:42") # auto-queue
+        info(autosaveFields_pass0, "VAL")
+    }
+
+
+longin/longout
+""""""""""""""
+
+Operates on a signed 32-bit integer
+
+mbbi/mbbo
+"""""""""
+
+Operates on a signed 32-bit integer.
+Respects the NOBT (number of bits) and SHFT (shift) fields to operate on bit registers. ::
+
+    record(mbbo, "$(P)reg3:1-Sel") {
+        field(DTYP, "PSC Reg")
+        field(OUT , "@$(NAME) 1 12")
+        field(NOBT, "2")
+        field(SHFT, "16") # select bits 16 and 17
+        ...
+    }
+
+bi/bo
+"""""
+
+Operate on an unsigned 32-bit integer.
+Respects the MASK field. ::
+
+    record(bo, "$(P)reg3:0-Sel") {
+        field(DTYP, "PSC Reg")
+        field(OUT , "@$(NAME) 1 12")
+        field(MASK, "0x40000") # bit 18
+        ...
+    }
+
+ai/ao
+"""""
+
+DTYP="PSC Reg" operates on a signed 32-bit integer.
+Alternately, DTYP="PSC Reg F32" or DTYP="PSC Reg F64"
+may be used to operate on 32 or 64-bit IEEE floating point values.
+
+
+Waveform Block Access
+---------------------
+
+Arrays my be encoded/decoded from PSC messages with a waveform record.
+Array element type is determined by the DTYP.
+In this example, signed 16-bit integers.
+The INP/OUT link contains the device instance name and message ID.
+Optionally, an offset and step (in bytes) may be given to operate on interleaved arrays. ::
+
+    record(waveform, "$(P)wfin-I") {
+        field(DTYP, "PSC Block I16 In")
+        field(INP , "@$(NAME) $(msgid) $(offset=0) $(step=0)")
+        field(SCAN, "I/O Intr")
+        field(FTVL, "DOUBLE")
+        field(NELM, "10")
+    }
+
+Sending an array is accomplished by replacing "In" with "Out" in the DTYP. ::
+
+    record(waveform, "$(P)wfout-SP") {
+        field(DTYP, "PSC Block I16 Out")
+        field(INP , "@$(NAME) $(msgid)")
+        field(FTVL, "DOUBLE")
+        field(NELM, "10")
+        field(FLNK, "$(P)Send-Cmd")
+    }
 
 Single Register Writes
 ----------------------
@@ -126,10 +251,3 @@ PSC Single F32
 """"""""""""""
 
 For ao records, the value is interpreted as a 32-bit IEEE-754 single precision floating point number.
-
-
-Register Blocks
----------------
-
-Waveform Blocks
----------------
