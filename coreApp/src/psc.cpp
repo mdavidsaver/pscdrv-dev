@@ -231,6 +231,7 @@ void PSC::eventcb(short events)
         connected = true;
         message = "Connected";
         conncount++;
+        scanIoRequest(onConnect);
 
     } else if(events&(BEV_EVENT_ERROR|BEV_EVENT_EOF|BEV_EVENT_TIMEOUT))
     {

@@ -54,6 +54,7 @@ PSCBase::PSCBase(const std::string &name,
     ,message("Initialize")
 {
     scanIoInit(&scan);
+    scanIoInit(&onConnect);
 
     pscmap[name] = this;
 }

@@ -10,6 +10,7 @@ variable(PSCMaxSendBuffer, int)
 # PSC wide operations
 #  Link: "@pscname"
 device(bi, INST_IO, devPSCConnectedBi, "PSC Ctrl Connected")
+device(bi, INST_IO, devPSCOnConnectBi, "PSC On Connect")
 device(stringin, INST_IO, devPSCMessageSI, "PSC Ctrl Message")
 device(bo, INST_IO, devPSCSendAllBo,   "PSC Ctrl Send All")
 device(bo, INST_IO, devPSCForceReConn,   "PSC Ctrl Reconnect")

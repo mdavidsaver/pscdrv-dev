@@ -103,6 +103,7 @@ void PSCUDP::connect()
         throw std::runtime_error("Failed to add Rx event");
 
     connected = true; // UDP socket is always "connected"
+    scanIoRequest(onConnect);
     if(PSCDebug>4)
         timefprintf(stderr, "%s: \"connected\"\n", name.c_str());
 }

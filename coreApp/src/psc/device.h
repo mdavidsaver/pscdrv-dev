@@ -146,6 +146,7 @@ public:
 
     std::string message;
     IOSCANPVT scan;
+    IOSCANPVT onConnect;
 
     virtual void report(int lvl);
 protected:

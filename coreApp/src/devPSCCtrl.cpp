@@ -98,6 +98,16 @@ long get_iointr_info(int cmd, dbCommon *prec, IOSCANPVT *io)
     return 0;
 }
 
+long get_iointr_info_onConn(int cmd, dbCommon *prec, IOSCANPVT *io)
+{
+    if(!prec->dpvt)
+        return -1;
+    PSC *psc=(PSC*)prec->dpvt;
+
+    *io = psc->onConnect;
+    return 0;
+}
+
 long read_bi_connected(biRecord* prec)
 {
     if(!prec->dpvt)
@@ -217,6 +227,7 @@ long write_lo_send_block(longoutRecord* prec)
 }
 
 MAKEDSET(bi, devPSCConnectedBi, &init_input<biRecord>, &get_iointr_info, &read_bi_connected);
+MAKEDSET(bi, devPSCOnConnectBi, &init_input<biRecord>, &get_iointr_info_onConn, &read_bi_connected);
 MAKEDSET(stringin, devPSCMessageSI, &init_input<stringinRecord>, &get_iointr_info, &read_si_message);
 MAKEDSET(bo, devPSCSendAllBo  , &init_output<boRecord>, NULL, &write_bo_send_changed);
 MAKEDSET(bo, devPSCForceReConn, &init_output<boRecord>, NULL, &write_force_reconnect);
@@ -230,6 +241,7 @@ MAKEDSET(longin, devPSCBlockCountLi, &init_count, NULL, &read_block_count);
 #include <epicsExport.h>
 
 epicsExportAddress(dset, devPSCConnectedBi);
+epicsExportAddress(dset, devPSCOnConnectBi);
 epicsExportAddress(dset, devPSCMessageSI);
 epicsExportAddress(dset, devPSCSendAllBo);
 epicsExportAddress(dset, devPSCForceReConn);

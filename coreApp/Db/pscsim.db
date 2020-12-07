@@ -41,6 +41,34 @@ record(bo, "$(P)send") {
   field(ONAM, "Send")
 }
 
+# actions when connection established
+
+record(bi, "$(P)onconn") {
+  field(DTYP, "PSC On Connect")
+  field(INP , "@test")
+  field(SCAN, "I/O Intr")
+  field(ZNAM, "Disconnected")
+  field(ONAM, "Connected")
+  field(FLNK, "$(P)onconn:1")
+}
+
+record(fanout, "$(P)onconn:1") {
+  field(LNK0, "$(P)speak")
+  field(LNK1, "$(P)wfout")
+  field(LNK2, "$(P)wfout2")
+  field(LNK3, "$(P)wfout3")
+  field(LNK4, "$(P)wfout4")
+  field(LNK5, "$(P)reg0-SP")
+  field(LNK6, "$(P)reg1-SP")
+  field(LNK7, "$(P)reg2-SP")
+  field(LNK8, "$(P)reg3:0-Sel")
+  field(LNK9, "$(P)reg3:1-Sel")
+  field(LNKA, "$(P)reg4-SP")
+  field(LNKB, "$(P)regsend")
+  field(LNKC, "$(P)write0-SP")
+}
+
+
 
 # Test strings
 record(stringin, "$(P)hear") {
@@ -180,7 +208,7 @@ record(waveform, "$(P)wfx3") {
 record(longout, "$(P)regsend") {
   field(DTYP, "PSC Ctrl Send")
   field(OUT , "@test")
-  field(VAL , "1")
+  field(VAL , "1") # block w/ msgid=1
   field(FLNK, "$(P)send")
 }
 
