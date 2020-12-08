@@ -71,7 +71,7 @@ void parse_link(Priv* priv, const char* link, int direction)
     default: priv->block = NULL; break;
     }
 
-    if(onconn && direction==1) {
+    if(onconn && direction!=0) {
         priv->psc->procOnConnect.push_back(priv->prec);
     }
 
