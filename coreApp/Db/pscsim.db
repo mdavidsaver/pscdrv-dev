@@ -53,7 +53,7 @@ record(bi, "$(P)onconn") {
 }
 
 record(fanout, "$(P)onconn:1") {
-  field(LNK0, "$(P)speak")
+  #field(LNK0, "$(P)speak") # use info(SYNC, ... instead
   field(LNK1, "$(P)wfout")
   field(LNK2, "$(P)wfout2")
   field(LNK3, "$(P)wfout3")
@@ -84,6 +84,7 @@ record(stringout, "$(P)speak") {
   field(OUT , "@test 1015")
   field(FLNK, "$(P)send")
   info(autosaveFields_pass0, "VAL")
+  info(SYNC, "ProcOnConn")
 }
 
 record(longin, "$(P)cnt:hear") {

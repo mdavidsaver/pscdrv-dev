@@ -7,6 +7,8 @@
 
 #include <stdexcept>
 
+#include <epicsString.h>
+
 #include "psc/devcommon.h"
 
 void parse_link(Priv* priv, const char* link, int direction)
@@ -43,6 +45,7 @@ void parse_link(Priv* priv, const char* link, int direction)
     priv->offset = offset;
     priv->step = step;
 
+    bool onconn;
     {
         RecInfo info(priv->prec);
 
@@ -55,6 +58,9 @@ void parse_link(Priv* priv, const char* link, int direction)
             else
                 priv->timeFromBlock = true;
         }
+
+        const char *scan = info.get("SYNC");
+        onconn = scan && epicsStrCaseCmp(scan, "ProcOnConn")==0;
     }
 
     Guard(priv->psc->lock);
@@ -63,6 +69,10 @@ void parse_link(Priv* priv, const char* link, int direction)
     case 0: priv->block = priv->psc->getRecv(block); break;
     case 1: priv->block = priv->psc->getSend(block); break;
     default: priv->block = NULL; break;
+    }
+
+    if(onconn && direction==1) {
+        priv->psc->procOnConnect.push_back(priv->prec);
     }
 
     if(!priv->block && direction<=1) {

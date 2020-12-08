@@ -15,6 +15,7 @@
 #include <epicsGuard.h>
 #include <epicsEvent.h>
 #include <epicsTime.h>
+#include <dbCommon.h>
 
 #include <string>
 #include <map>
@@ -147,6 +148,7 @@ public:
     std::string message;
     IOSCANPVT scan;
     IOSCANPVT onConnect;
+    std::vector<dbCommon*> procOnConnect;
 
     virtual void report(int lvl);
 protected:

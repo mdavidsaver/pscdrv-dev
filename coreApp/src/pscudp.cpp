@@ -15,6 +15,8 @@
 #include <event2/util.h>
 #include <event2/thread.h>
 
+#include <dbAccess.h>
+
 #define epicsExportSharedSymbols
 #include "psc/device.h"
 
@@ -104,6 +106,13 @@ void PSCUDP::connect()
 
     connected = true; // UDP socket is always "connected"
     scanIoRequest(onConnect);
+    for(size_t i=0, N=procOnConnect.size(); i<N; i++) {
+        dbCommon *prec = procOnConnect[i];
+        dbScanLock(prec);
+        dbProcess(prec);
+        dbScanUnlock(prec);
+    }
+
     if(PSCDebug>4)
         timefprintf(stderr, "%s: \"connected\"\n", name.c_str());
 }

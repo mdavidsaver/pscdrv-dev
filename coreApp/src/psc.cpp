@@ -233,6 +233,13 @@ void PSC::eventcb(short events)
         conncount++;
         scanIoRequest(onConnect);
 
+        for(size_t i=0, N=procOnConnect.size(); i<N; i++) {
+            dbCommon *prec = procOnConnect[i];
+            dbScanLock(prec);
+            dbProcess(prec);
+            dbScanUnlock(prec);
+        }
+
     } else if(events&(BEV_EVENT_ERROR|BEV_EVENT_EOF|BEV_EVENT_TIMEOUT))
     {
         std::string msg;

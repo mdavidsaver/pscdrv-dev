@@ -187,6 +187,12 @@ bool PSCBase::ReportOne(int lvl, PSCBase* psc)
         for(it=psc->recv_blocks.begin(), end=psc->recv_blocks.end(); it!=end; ++it) {
             pscreportblock(lvl, it->second);
         }
+        printf(" procOnConnect #%lu\n", psc->procOnConnect.size());
+        if(lvl>=3) {
+            for(size_t i=0, N=psc->procOnConnect.size(); i<N; i++) {
+                printf("   %s\n", psc->procOnConnect[i]->name);
+            }
+        }
     }
     return true;
 }
