@@ -54,6 +54,9 @@ Then add the pscdrv (and optionally pscSig) libraries as a dependencies to your 
     myioc_LIBS += pscCore
     myioc_LIBS += $(EPICS_BASE_IOC_LIBS)
 
+    myioc_SYS_LIBS += event_core event_extra
+    myioc_SYS_LIBS_Linux += event_pthreads
+
 Connecting to a device
 ----------------------
 
@@ -67,9 +70,9 @@ The final '1' enables RX inactivity timeout, which is almost always desirable.
 
 eg. a most complete example. ::
 
-    #!../../bin/linux-x86_64-debug/pscdemo
-    dbLoadDatabase("../../dbd/pscdemo.dbd",0,0)
-    pscdemo_registerRecordDeviceDriver(pdbbase)
+    #!../../bin/linux-x86_64-debug/myioc
+    dbLoadDatabase("../../dbd/myioc.dbd",0,0)
+    myioc_registerRecordDeviceDriver(pdbbase)
 
     createPSC("dev1", "localhost", 8765, 1)
     
