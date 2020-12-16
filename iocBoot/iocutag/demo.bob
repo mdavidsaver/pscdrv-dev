@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>Display</name>
+  <macros>
+    <P>TST:</P>
+  </macros>
+  <widget type="bool_button" version="2.0.0">
+    <name>Boolean Button</name>
+    <pv_name>pva://$(P)BEAM</pv_name>
+    <x>10</x>
+    <y>10</y>
+    <width>80</width>
+    <labels_from_pv>true</labels_from_pv>
+  </widget>
+  <widget type="bool_button" version="2.0.0">
+    <name>Boolean Button_1</name>
+    <pv_name>pva://$(P)SRC</pv_name>
+    <x>10</x>
+    <y>50</y>
+    <width>80</width>
+    <labels_from_pv>true</labels_from_pv>
+  </widget>
+  <widget type="bool_button" version="2.0.0">
+    <name>Boolean Button_2</name>
+    <pv_name>pva://$(P)AUTO</pv_name>
+    <x>10</x>
+    <y>90</y>
+    <width>80</width>
+    <labels_from_pv>true</labels_from_pv>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update</name>
+    <pv_name>pva://$(P)CNT</pv_name>
+    <x>190</x>
+    <y>10</y>
+    <width>50</width>
+    <height>30</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_2</name>
+    <pv_name>pva://$(P)CNT.VAL{"utag":{"M":1,"V":1}}</pv_name>
+    <x>190</x>
+    <y>70</y>
+    <width>50</width>
+    <height>30</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_4</name>
+    <pv_name>pva://$(P)CNT.{"utag":{"M":3,"V":3}}</pv_name>
+    <x>190</x>
+    <y>130</y>
+    <width>50</width>
+    <height>30</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_5</name>
+    <pv_name>pva://$(P)CNT.{"utag":{"M":3,"V":1}}</pv_name>
+    <x>190</x>
+    <y>100</y>
+    <width>50</width>
+    <height>30</height>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_6</name>
+    <pv_name>pva://$(P)CNT.{"utag":{"M":1,"V":0}}</pv_name>
+    <x>190</x>
+    <y>40</y>
+    <width>50</width>
+    <height>30</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label</name>
+    <text>Always</text>
+    <x>120</x>
+    <y>10</y>
+    <width>70</width>
+    <height>30</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_1</name>
+    <text>Beam Off</text>
+    <x>120</x>
+    <y>40</y>
+    <width>70</width>
+    <height>30</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_2</name>
+    <text>Beam On</text>
+    <x>120</x>
+    <y>70</y>
+    <width>70</width>
+    <height>30</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_3</name>
+    <text>On Src A</text>
+    <x>120</x>
+    <y>100</y>
+    <width>70</width>
+    <height>30</height>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_4</name>
+    <text>On Src B</text>
+    <x>120</x>
+    <y>130</y>
+    <width>70</width>
+    <height>30</height>
+  </widget>
+  <widget type="xyplot" version="2.0.0">
+    <name>X/Y Plot_3</name>
+    <x>20</x>
+    <y>370</y>
+    <width>1150</width>
+    <height>290</height>
+    <title>All updates</title>
+    <x_axis>
+      <title>X</title>
+      <autoscale>true</autoscale>
+      <log_scale>false</log_scale>
+      <minimum>0.0</minimum>
+      <maximum>100.0</maximum>
+      <show_grid>false</show_grid>
+      <title_font>
+        <font name="Default Bold" family="Liberation Sans" style="BOLD" size="14.0">
+        </font>
+      </title_font>
+      <scale_font>
+        <font name="Default" family="Liberation Sans" style="REGULAR" size="14.0">
+        </font>
+      </scale_font>
+      <visible>true</visible>
+    </x_axis>
+    <y_axes>
+      <y_axis>
+        <title>Y</title>
+        <autoscale>false</autoscale>
+        <log_scale>false</log_scale>
+        <minimum>0.0</minimum>
+        <maximum>512.0</maximum>
+        <show_grid>false</show_grid>
+        <title_font>
+          <font name="Default Bold" family="Liberation Sans" style="BOLD" size="14.0">
+          </font>
+        </title_font>
+        <scale_font>
+          <font name="Default" family="Liberation Sans" style="REGULAR" size="14.0">
+          </font>
+        </scale_font>
+        <visible>true</visible>
+      </y_axis>
+    </y_axes>
+    <traces>
+      <trace>
+        <name>raw</name>
+        <x_pv></x_pv>
+        <y_pv>pva://$(P)WF.VAL{"arr":{}}</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="0" green="0" blue="255">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>min</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{}}/min</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="255" green="0" blue="0">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>max</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{}}/max</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="0" green="255" blue="0">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>mean</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{}}/mean</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="170" green="0" blue="255">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>1</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+    </traces>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Text Entry</name>
+    <pv_name>pva://$(P)WF:STAT.DEC</pv_name>
+    <x>380</x>
+    <y>20</y>
+    <width>50</width>
+    <height>30</height>
+  </widget>
+  <widget type="xyplot" version="2.0.0">
+    <name>X/Y Plot_4</name>
+    <x>20</x>
+    <y>180</y>
+    <width>570</width>
+    <height>180</height>
+    <title>Beam On Src A</title>
+    <x_axis>
+      <title>X</title>
+      <autoscale>true</autoscale>
+      <log_scale>false</log_scale>
+      <minimum>0.0</minimum>
+      <maximum>100.0</maximum>
+      <show_grid>false</show_grid>
+      <title_font>
+        <font name="Default Bold" family="Liberation Sans" style="BOLD" size="14.0">
+        </font>
+      </title_font>
+      <scale_font>
+        <font name="Default" family="Liberation Sans" style="REGULAR" size="14.0">
+        </font>
+      </scale_font>
+      <visible>true</visible>
+    </x_axis>
+    <y_axes>
+      <y_axis>
+        <title>Y</title>
+        <autoscale>false</autoscale>
+        <log_scale>false</log_scale>
+        <minimum>0.0</minimum>
+        <maximum>512.0</maximum>
+        <show_grid>false</show_grid>
+        <title_font>
+          <font name="Default Bold" family="Liberation Sans" style="BOLD" size="14.0">
+          </font>
+        </title_font>
+        <scale_font>
+          <font name="Default" family="Liberation Sans" style="REGULAR" size="14.0">
+          </font>
+        </scale_font>
+        <visible>true</visible>
+      </y_axis>
+    </y_axes>
+    <traces>
+      <trace>
+        <name>raw</name>
+        <x_pv></x_pv>
+        <y_pv>pva://$(P)WF.VAL{"arr":{},"utag":{"M":3,"V":1}}</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="0" green="0" blue="255">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>min</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":1}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":1}}/min</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="255" green="0" blue="0">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>max</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":1}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":1}}/max</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="0" green="255" blue="0">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>mean</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":1}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":1}}/mean</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="170" green="0" blue="255">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>1</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+    </traces>
+  </widget>
+  <widget type="xyplot" version="2.0.0">
+    <name>X/Y Plot_5</name>
+    <x>600</x>
+    <y>170</y>
+    <width>570</width>
+    <height>180</height>
+    <title>Beam On Src B</title>
+    <x_axis>
+      <title>X</title>
+      <autoscale>true</autoscale>
+      <log_scale>false</log_scale>
+      <minimum>0.0</minimum>
+      <maximum>100.0</maximum>
+      <show_grid>false</show_grid>
+      <title_font>
+        <font name="Default Bold" family="Liberation Sans" style="BOLD" size="14.0">
+        </font>
+      </title_font>
+      <scale_font>
+        <font name="Default" family="Liberation Sans" style="REGULAR" size="14.0">
+        </font>
+      </scale_font>
+      <visible>true</visible>
+    </x_axis>
+    <y_axes>
+      <y_axis>
+        <title>Y</title>
+        <autoscale>false</autoscale>
+        <log_scale>false</log_scale>
+        <minimum>0.0</minimum>
+        <maximum>512.0</maximum>
+        <show_grid>false</show_grid>
+        <title_font>
+          <font name="Default Bold" family="Liberation Sans" style="BOLD" size="14.0">
+          </font>
+        </title_font>
+        <scale_font>
+          <font name="Default" family="Liberation Sans" style="REGULAR" size="14.0">
+          </font>
+        </scale_font>
+        <visible>true</visible>
+      </y_axis>
+    </y_axes>
+    <traces>
+      <trace>
+        <name>raw</name>
+        <x_pv></x_pv>
+        <y_pv>pva://$(P)WF.VAL{"arr":{},"utag":{"M":3,"V":3}}</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="0" green="0" blue="255">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>min</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":3}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":3}}/min</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="255" green="0" blue="0">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>max</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":3}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":3}}/max</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="0" green="255" blue="0">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>0</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+      <trace>
+        <name>mean</name>
+        <x_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":3}}/idx</x_pv>
+        <y_pv>pva://$(P)WF:STAT.VAL{"arr":{},"utag":{"M":3,"V":3}}/mean</y_pv>
+        <err_pv></err_pv>
+        <axis>0</axis>
+        <trace_type>1</trace_type>
+        <color>
+          <color red="170" green="0" blue="255">
+          </color>
+        </color>
+        <line_width>1</line_width>
+        <line_style>0</line_style>
+        <point_type>1</point_type>
+        <point_size>10</point_size>
+        <visible>true</visible>
+      </trace>
+    </traces>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_5</name>
+    <text>Decimation</text>
+    <x>260</x>
+    <y>20</y>
+    <width>110</width>
+    <height>30</height>
+    <horizontal_alignment>2</horizontal_alignment>
+    <vertical_alignment>1</vertical_alignment>
+  </widget>
+  <widget type="combo" version="2.0.0">
+    <name>Combo Box</name>
+    <pv_name>TST:WF.SCAN</pv_name>
+    <x>330</x>
+    <y>90</y>
+    <width>130</width>
+  </widget>
+</display>

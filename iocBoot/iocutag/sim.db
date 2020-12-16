@@ -1,0 +1,79 @@
+
+# sim reading
+
+record(svectorin, "$(P)WF") {
+    field(DTYP, "PSC Block I32 In")
+    field(INP , "@$(NAME) 0 12") # block zero, skip 12 bytes
+    field(SCAN, "I/O Intr")
+    field(FTVL, "DOUBLE")
+    field(NELM, "1024")
+    field(TSE , "-2")
+    field(FLNK, "$(P)WF:STAT")
+    info("TimeFromBlock", "0") # time from device block0[0:7]
+    info("TagFromBlock", "8")  # utag from device block0[8:11]
+}
+
+record(statBin, "$(P)WF:STAT") {
+    field(INP , "$(P)WF NPP")
+    field(TSEL, "$(P)WF.TIME NPP")
+    field(FLNK, "$(P)CNT")
+    field(DEC , "16")
+}
+
+record(pvstructin, "$(P)WF2") {
+    field(DTYP, "PSC Block I32 In")
+    field(INP , "@$(NAME) 0 12") # block zero, skip 12 bytes
+    field(SCAN, "I/O Intr")
+    field(TSE , "-2")
+    field(FLNK, "$(P)CNT")
+    info("TimeFromBlock", "0") # time from device block0[0:7]
+    info("TagFromBlock", "8")  # utag from device block0[8:11]
+}
+
+# sim control
+record(calc, "$(P)CNT") {
+    field(CALC, "VAL+1")
+    field(TSEL, "$(P)WF.TIME") # also copies UTAG
+}
+
+record(bo, "$(P)BEAM") {
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(OUT , "$(P)CTRL.B0 PP")
+    field(VAL , "0")
+}
+
+record(bo, "$(P)SRC") {
+    field(ZNAM, "A")
+    field(ONAM, "B")
+    field(OUT , "$(P)CTRL.B1 PP")
+    field(VAL , "0")
+}
+
+record(bo, "$(P)AUTO") {
+    field(ZNAM, "Manual")
+    field(ONAM, "Auto")
+    field(OUT , "$(P)CTRL.B2 PP")
+    field(VAL , "0")
+}
+
+record(mbboDirect, "$(P)CTRL") {
+    field(DTYP, "PSC Reg")
+    field(OUT , "@$(NAME) 1")
+    field(VAL , "0")
+    field(FLNK, "$(P)send1_")
+}
+
+record(longout, "$(P)send1_") {
+    field(DTYP, "PSC Ctrl Send")
+    field(OUT , "@$(NAME)")
+    field(VAL , "1")
+    field(FLNK, "$(P)send_")
+}
+
+record(bo, "$(P)send_") {
+    field(DTYP, "PSC Ctrl Send All")
+    field(OUT , "@$(NAME)")
+    field(ZNAM, "Send")
+    field(ONAM, "Send")
+}
