@@ -92,6 +92,8 @@ struct Block
     CBList<Block> listeners;
 
     epicsUInt32 count; // TX or RX counter
+    epicsUInt32 scanCount;
+    epicsUInt32 scanOflow;
 
     epicsTime rxtime; // RX timestamp
 

@@ -36,6 +36,9 @@ Block::Block(PSCBase *p, epicsUInt16 c)
     ,scan()
     ,scanBusy(0u)
     ,scanQueued(false)
+    ,count(0u)
+    ,scanCount(0u)
+    ,scanOflow(0u)
 {
     scanIoInit(&scan);
     scanIoSetComplete(scan, &Block::scanned, this);
@@ -46,9 +49,11 @@ void Block::requestScan()
     if(scanBusy) {
         // previous scanning in progress
         scanQueued = true;
+        scanOflow++;
 
     } else {
         scanBusy = scanIoRequest(scan);
+        scanCount++;
     }
 }
 
@@ -196,8 +201,10 @@ bool pscreportblock(int lvl, Block* block)
 {
     printf(" Block %d\n", block->code);
     printf("  Queued : %s\n", block->queued  ? "Yes":"No");
-    printf("  IOCount: %u  Size: %lu\n", block->count,
-           (unsigned long)block->data.size());
+    printf("  IOCount: %u  Size: %lu  ScanCount: %u  ScanOFlow: %u\n", block->count,
+           (unsigned long)block->data.size(),
+           (unsigned)block->scanCount,
+           (unsigned)block->scanOflow);
     return true;
 }
 
