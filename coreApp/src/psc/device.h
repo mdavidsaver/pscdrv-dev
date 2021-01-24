@@ -84,6 +84,11 @@ struct Block
     bool queued;
 
     IOSCANPVT scan;
+    // bit mask of callback.h priority for in-progress scan
+    unsigned scanBusy;
+    // requestScan() called again while previous scan in progress
+    bool scanQueued;
+
     CBList<Block> listeners;
 
     epicsUInt32 count; // TX or RX counter
@@ -91,6 +96,11 @@ struct Block
     epicsTime rxtime; // RX timestamp
 
     Block(PSCBase*, epicsUInt16);
+
+    void requestScan();
+private:
+    static
+    void scanned(void *usr, IOSCANPVT, int prio);
 };
 
 // User code must lock PSCBase::lock before

@@ -34,8 +34,42 @@ Block::Block(PSCBase *p, epicsUInt16 c)
     ,code(c)
     ,queued(false)
     ,scan()
+    ,scanBusy(0u)
+    ,scanQueued(false)
 {
     scanIoInit(&scan);
+    scanIoSetComplete(scan, &Block::scanned, this);
+}
+
+void Block::requestScan()
+{
+    if(scanBusy) {
+        // previous scanning in progress
+        scanQueued = true;
+
+    } else {
+        scanBusy = scanIoRequest(scan);
+    }
+}
+
+void Block::scanned(void *usr, IOSCANPVT, int prio)
+{
+    Block *self = (Block*)usr;
+    try {
+        Guard G(self->psc.lock);
+
+        assert(self->scanBusy & (1<<prio));
+        self->scanBusy &= ~(1<<prio);
+
+        if(!self->scanBusy && self->scanQueued) {
+            // scan done, and next scan already queued
+            self->scanQueued = false;
+            self->requestScan();
+        }
+
+    }catch(std::exception& e){
+        errlogPrintf("Error in Block::scanned %s : %s\n", self->psc.name.c_str(), e.what());
+    }
 }
 
 PSCBase::PSCBase(const std::string &name,

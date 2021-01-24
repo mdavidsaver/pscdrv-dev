@@ -342,7 +342,7 @@ void PSC::recvdata()
 
                 bodyblock->data.consume(buf, bodylen);
 
-                scanIoRequest(bodyblock->scan);
+                bodyblock->requestScan();
                 bodyblock->listeners(bodyblock);
 
             } else {

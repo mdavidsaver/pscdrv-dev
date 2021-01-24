@@ -266,7 +266,7 @@ void PSCUDP::recvdata(short evt)
 
             bodyblock.data.assign(hbuf+8, bodylen);
 
-            scanIoRequest(bodyblock.scan);
+            bodyblock.requestScan();
             bodyblock.listeners(&bodyblock);
         } else {
             ukncount++;
