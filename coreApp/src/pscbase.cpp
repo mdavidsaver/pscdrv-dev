@@ -79,14 +79,10 @@ void Block::scanned(void *usr, IOSCANPVT, int prio)
 
 PSCBase::PSCBase(const std::string &name,
                  const std::string &host,
-                 unsigned short port,
-                 unsigned int timeoutmask)
+                 unsigned short port)
     :name(name)
     ,host(host)
     ,port(port)
-    ,mask(timeoutmask)
-    ,base(EventBase::makeBase())
-    ,session(NULL)
     ,connected(false)
     ,ukncount(0)
     ,conncount(0)
@@ -100,6 +96,7 @@ PSCBase::PSCBase(const std::string &name,
 
 PSCBase::~PSCBase()
 {
+    pscmap.erase(name);
 }
 
 Block* PSCBase::getSend(epicsUInt16 block)
@@ -149,6 +146,18 @@ PSCBase *PSCBase::getPSCBase(const std::string& name)
         return NULL;
     return it->second;
 }
+
+PSCEventBase::PSCEventBase(const std::string& name,
+                           const std::string& host,
+                           unsigned short port,
+                           unsigned int timeoutmask)
+    :PSCBase (name, host, port)
+    ,mask(timeoutmask)
+    ,base(EventBase::makeBase())
+    ,session(NULL)
+{}
+
+PSCEventBase::~PSCEventBase() {}
 
 extern "C"
 void createPSC(const char* name, const char* host, int port, int timeout)

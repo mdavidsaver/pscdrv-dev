@@ -27,7 +27,7 @@ PSCUDP::PSCUDP(const std::string &name,
                unsigned short hostport,
                unsigned short ifaceport,
                unsigned int timeoutmask)
-    :PSCBase(name, host, hostport, timeoutmask)
+    :PSCEventBase(name, host, hostport, timeoutmask)
     ,rxscratch(1024) // must be greater than HEADER_SIZE
 {
     socket = ::socket(AF_INET, SOCK_DGRAM, 0);

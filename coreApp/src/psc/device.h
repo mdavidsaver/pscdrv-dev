@@ -117,12 +117,6 @@ public:
     typedef std::map<epicsUInt16, Block*> block_map;
 
 protected:
-    unsigned int mask;
-
-    EventBase::pointer base;
-    evdns_base *dns;
-    bufferevent *session;
-
     bool connected;
 
     epicsUInt32 ukncount; // RX counter for unknown blocks
@@ -133,8 +127,7 @@ protected:
 public:
     PSCBase(const std::string& name,
         const std::string& host,
-        unsigned short port,
-        unsigned int timeoutmask);
+        unsigned short port);
     virtual ~PSCBase();
 
     mutable epicsMutex lock;
@@ -193,10 +186,28 @@ public:
     bool ReportOne(int lvl, PSCBase* psc);
 };
 
-class PSC : public PSCBase
+class PSCEventBase : public PSCBase
+{
+
+protected:
+    unsigned int mask;
+
+    EventBase::pointer base;
+    bufferevent *session;
+public:
+    PSCEventBase(const std::string& name,
+                 const std::string& host,
+                 unsigned short port,
+                 unsigned int timeoutmask);
+    virtual ~PSCEventBase();
+
+};
+
+class PSC : public PSCEventBase
 {
 
     event *reconnect_timer;
+    evdns_base *dns;
     bool timer_active;
 
 public:
@@ -248,7 +259,7 @@ private:
     static void bev_reconnect(int,short,void*);
 };
 
-class PSCUDP : public PSCBase
+class PSCUDP : public PSCEventBase
 {
 public:
     PSCUDP(const std::string& name,
