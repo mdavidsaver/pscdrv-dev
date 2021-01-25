@@ -117,6 +117,8 @@ void PSCUDP::connect()
         timefprintf(stderr, "%s: \"connected\"\n", name.c_str());
 }
 
+void PSCUDP::stopinloop() {}
+
 void PSCUDP::senddata(short evt)
 {
     if(PSCDebug>4)

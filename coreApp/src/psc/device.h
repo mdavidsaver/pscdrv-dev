@@ -141,6 +141,7 @@ public:
     virtual void queueSend(Block*, const void*, epicsUInt32) =0;
 
     virtual void connect()=0;
+    virtual void stop()=0;
     virtual void flushSend()=0;
     virtual void forceReConnect()=0;
 
@@ -162,6 +163,7 @@ protected:
 
 public:
     static void startAll();
+    static void stopAll();
     static PSCBase* getPSCBase(const std::string&);
     template<typename T>
     static T* getPSC(const std::string& n)
@@ -201,6 +203,8 @@ public:
                  unsigned int timeoutmask);
     virtual ~PSCEventBase();
 
+    virtual void stop() override;
+    virtual void stopinloop() =0;
 };
 
 class PSC : public PSCEventBase
@@ -251,7 +255,7 @@ private:
 
 public:
     // atexit
-    void stop();
+    void stopinloop() override final;
 private:
 
     static void bev_eventcb(bufferevent*,short,void*);
@@ -294,6 +298,7 @@ private:
     sendbuf_t readybuf;// a free list
 
     virtual void connect() override;
+    virtual void stopinloop() override final;
 
     void senddata(short evt);
     void recvdata(short evt);

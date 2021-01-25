@@ -139,6 +139,18 @@ void PSCBase::startAll()
     }
 }
 
+void PSCBase::stopAll()
+{
+    pscmap_t trash;
+    pscmap.swap(trash);
+    while(!trash.empty()) {
+        PSCBase* psc = trash.begin()->second;
+        trash.erase(trash.begin());
+        psc->stop();
+        delete psc;
+    }
+}
+
 PSCBase *PSCBase::getPSCBase(const std::string& name)
 {
     pscmap_t::const_iterator it=pscmap.find(name);
@@ -158,6 +170,20 @@ PSCEventBase::PSCEventBase(const std::string& name,
 {}
 
 PSCEventBase::~PSCEventBase() {}
+
+void psc_real_exit(evutil_socket_t, short, void *raw)
+{
+    PSCEventBase *self = (PSCEventBase*)raw;
+    // finally cleanup
+    self->stopinloop();
+}
+
+void PSCEventBase::stop()
+{
+    // jump to the event loop worker also syncs
+    event_base_once(base->get(), -1, EV_TIMEOUT, &psc_real_exit, this, 0);
+    base->stop();
+}
 
 extern "C"
 void createPSC(const char* name, const char* host, int port, int timeout)
@@ -198,11 +224,17 @@ void setPSCSendBlockSize(const char* name, int bid, int size)
     }
 }
 
+static void PSCAtExit(void*)
+{
+    PSCBase::stopAll();
+}
+
 static void PSCHook(initHookState state)
 {
     if(state!=initHookAfterIocRunning)
         return;
-    PSC::startAll();
+    epicsAtExit(PSCAtExit, 0);
+    PSCBase::startAll();
 }
 
 static
