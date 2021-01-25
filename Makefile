@@ -13,7 +13,8 @@ $(foreach dir, $(filter-out configure,$(DIRS)),$(eval $(call DIR_template,$(dir)
 iocBoot_DEPEND_DIRS += $(filter %App,$(DIRS))
 testApp_DEPEND_DIRS += coreApp
 sigApp_DEPEND_DIRS += coreApp
-demoApp_DEPEND_DIRS += coreApp
+udpApp_DEPEND_DIRS += coreApp
+demoApp_DEPEND_DIRS += coreApp udpApp
 
 include $(TOP)/configure/RULES_TOP
 
