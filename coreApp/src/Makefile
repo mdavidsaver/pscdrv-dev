@@ -5,6 +5,8 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
 
+USR_CPPFLAGS += -DBUILDING_pscdrv_API
+
 LIBRARY_IOC = pscCore
 
 DBD += pscCore.dbd

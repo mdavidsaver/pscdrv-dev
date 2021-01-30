@@ -40,12 +40,13 @@
 #endif
 
 extern "C" {
+PSC_API
 extern int PSCDebug;
 extern int PSCInactivityTime;
 extern int PSCMaxSendBuffer;
 }
 
-class recAlarm : public std::exception
+class PSC_API recAlarm : public std::exception
 {
 public:
     short status, severity;
@@ -74,7 +75,7 @@ public:
 class dbCommon;
 class PSCBase;
 
-struct Block
+struct PSC_API Block
 {
     PSCBase& psc;
     const epicsUInt16 code;
@@ -107,7 +108,7 @@ private:
 
 // User code must lock PSCBase::lock before
 // any access to methods or other members.
-class PSCBase
+class PSC_API PSCBase
 {
 public:
     const std::string name;
