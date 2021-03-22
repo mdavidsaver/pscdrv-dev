@@ -1,0 +1,55 @@
+record(stringout, "$(P)noise") {
+  field(DTYP, "PSC Block")
+  field(OUT , "@$(NAME) 65535") # hopefully unused
+#  field(SCAN, "1 second")
+  field(FLNK, "$(P)send")
+}
+
+record(bo, "$(P)send") {
+  field(DTYP, "PSC Ctrl Send All")
+  field(OUT , "@$(NAME)")
+  field(ZNAM, "Send")
+  field(ONAM, "Send")
+}
+
+record(waveform, "$(P)wf") {
+  field(DTYP, "PSC Block I32 In")
+  field(INP , "@test 12345")
+  field(SCAN, "I/O Intr")
+  field(FTVL, "DOUBLE")
+  field(NELM, "1024")
+  field(TSE , "-2")
+  field(FLNK, "$(P)seq")
+}
+
+record(longin, "$(P)seq") {
+  field(DTYP, "PSC Reg")
+  field(INP , "@test 12345 0")
+  field(TSE , "-2")
+  field(FLNK, "$(P)wf:cnt")
+}
+
+record(calc, "$(P)wf:cnt") {
+  field(CALC, "VAL+1")
+  field(TSEL, "$(P)wf.TIME")
+}
+
+record(calc, "$(P)wf:rate") {
+  field(SCAN, "1 second")
+  field(INPA, "$(P)wf:cnt")
+  field(CALC, "C:=A-B;B:=A;C")
+  field(EGU , "Hz")
+}
+
+record(longin, "$(P)rx:cnt") {
+  field(DTYP, "PSC Block Msg Count")
+  field(INP , "@test 12345 rx")
+  field(SCAN, "1 second")
+  field(FLNK, "$(P)rx:rate")
+}
+
+record(calc, "$(P)rx:rate") {
+  field(INPA, "$(P)rx:cnt")
+  field(CALC, "C:=A-B;B:=A;C")
+  field(EGU , "Hz")
+}
