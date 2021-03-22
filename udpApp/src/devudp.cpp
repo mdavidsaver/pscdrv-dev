@@ -77,21 +77,20 @@ long devudp_init_record_in(REC *prec)
 
 #define TRY if(!prec->dpvt) return -1; UDPFast *dev = (UDPFast*)prec->dpvt; (void)dev; try
 
-long devudp_set_filebase(lsoRecord* prec)
+template<std::string UDPFast::*STR>
+long devudp_set_string(lsoRecord* prec)
 {
     TRY {
+        std::string& str = dev->*STR;
+
         prec->val[prec->sizv - 1u] = '\0'; // paranoia
         std::string newv(prec->val);
 
         Guard G(dev->lock);
-
-        if(dev->filebase!=newv) {
-            dev->filebase = newv;
-            dev->reopen = true;
-        }
+        str = newv;
 
         return 0;
-    }CATCH(devudp_set_filebase, prec);
+    }CATCH(devudp_set_string, prec);
 }
 
 long devudp_reopen(boRecord* prec)
@@ -129,20 +128,24 @@ long devudp_get_record(biRecord* prec)
     }CATCH(devudp_set_record, prec);
 }
 
-long devudp_get_filename(lsiRecord* prec)
+template<const std::string UDPFast::*STR>
+long devudp_get_string(lsiRecord* prec)
 {
     TRY {
+        const std::string& str = dev->*STR;
+
         Guard G(dev->lock);
-        size_t s = dev->lastfile.size();
-        if(s>=prec->sizv) {
+
+        size_t s = str.size();
+        if(s>=prec->sizv) { // truncating
             s = prec->sizv-1u;
             (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
         }
-        memcpy(prec->val, dev->lastfile.c_str(), s);
+        memcpy(prec->val, str.c_str(), s);
         prec->val[s] = '\0';
         prec->len = s+1u;
         return 0;
-    }CATCH(devudp_get_filename, prec);
+    }CATCH(devudp_get_string, prec);
 }
 
 long devudp_get_vpool(aiRecord* prec)
@@ -186,20 +189,14 @@ long devudp_get_inprog(aiRecord* prec)
     }CATCH(devudp_get_inprog, prec);
 }
 
-#define READ_ACOUNTER(NAME) \
-long devudp_get_ ## NAME(int64inRecord* prec) { \
-    TRY { \
-        prec->val = epicsAtomicGetSizeT(&dev->NAME); \
-        return 0; \
-    }CATCH(devudp_get_ ## NAME, prec); \
+template<size_t UDPFast::*CNT>
+long devudp_get_counter(int64inRecord *prec)
+{
+    TRY {
+        prec->val = epicsAtomicGetSizeT(&(dev->*CNT));
+        return 0;
+    }CATCH(devudp_get_ ## NAME, prec);
 }
-
-READ_ACOUNTER(netrx)
-READ_ACOUNTER(storewrote)
-READ_ACOUNTER(ndrops)
-READ_ACOUNTER(rxcnt)
-READ_ACOUNTER(ntimeout)
-READ_ACOUNTER(noom)
 
 long devudp_get_lastsize(int64inRecord* prec)
 {
@@ -210,21 +207,21 @@ long devudp_get_lastsize(int64inRecord* prec)
 }
 
 MAKEDSET(ai, devPSCUDPIntervalAI, &devudp_init_record_period, 0, &devudp_interval);
-MAKEDSET(lso, devPSCUDPFilebaseLSO, &devudp_init_record_out, 0, &devudp_set_filebase);
+MAKEDSET(lso, devPSCUDPFilebaseLSO, &devudp_init_record_out, 0, &devudp_set_string<&UDPFast::filebase>);
 MAKEDSET(bo, devPSCUDPReopenBO, &devudp_init_record_out, 0, &devudp_reopen);
 MAKEDSET(bo, devPSCUDPRecordBO, &devudp_init_record_out, 0, &devudp_set_record);
 MAKEDSET(bi, devPSCUDPRecordBI, &devudp_init_record_in, 0, &devudp_get_record);
-MAKEDSET(lsi, devPSCUDPFilenameLSI, &devudp_init_record_in, 0, &devudp_get_filename);
+MAKEDSET(lsi, devPSCUDPFilenameLSI, &devudp_init_record_in, 0, &devudp_get_string<&UDPFast::lastfile>);
 MAKEDSET(ai, devPSCUDPvpoolAI, &devudp_init_record_in, 0, &devudp_get_vpool);
 MAKEDSET(ai, devPSCUDPpendingAI, &devudp_init_record_in, 0, &devudp_get_pending);
 MAKEDSET(ai, devPSCUDPinprogAI, &devudp_init_record_in, 0, &devudp_get_inprog);
-MAKEDSET(int64in, devPSCUDPnetrxI64I, &devudp_init_record_in, 0, &devudp_get_netrx);
-MAKEDSET(int64in, devPSCUDPwroteI64I, &devudp_init_record_in, 0, &devudp_get_storewrote);
-MAKEDSET(int64in, devPSCUDPndropI64I, &devudp_init_record_in, 0, &devudp_get_ndrops);
+MAKEDSET(int64in, devPSCUDPnetrxI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::netrx>);
+MAKEDSET(int64in, devPSCUDPwroteI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::storewrote>);
+MAKEDSET(int64in, devPSCUDPndropI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::ndrops>);
 MAKEDSET(int64in, devPSCUDPlastsizeI64I, &devudp_init_record_in, 0, &devudp_get_lastsize);
-MAKEDSET(int64in, devPSCUDPnrxI64I, &devudp_init_record_in, 0, &devudp_get_rxcnt);
-MAKEDSET(int64in, devPSCUDPntimeoutI64I, &devudp_init_record_in, 0, &devudp_get_ntimeout);
-MAKEDSET(int64in, devPSCUDPnoomI64I, &devudp_init_record_in, 0, &devudp_get_noom);
+MAKEDSET(int64in, devPSCUDPnrxI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::rxcnt>);
+MAKEDSET(int64in, devPSCUDPntimeoutI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::ntimeout>);
+MAKEDSET(int64in, devPSCUDPnoomI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::noom>);
 
 }
 
