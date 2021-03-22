@@ -33,6 +33,8 @@ record(bo, "$(P)Record-Sel") {
 }
 
 
+# slow status chain
+
 record(bi, "$(P)Record-I") {
     field(DTYP, "PSCUDPFast record")
     field(INP , "@$(NAME)")
@@ -54,6 +56,8 @@ record(lsi, "$(P)LastErr-I") {
     field(INP , "@$(NAME)")
     field(SIZV, "512")
 }
+
+# fast status chain
 
 record(ai, "$(P)Itvl-I_") {
     field(DTYP, "PSCUDPFast interval")
@@ -105,6 +109,7 @@ record(calc, "$(P)RXBRate-I") {
     field(INPE, "$(P)Itvl-I_ NPP")
     field(CALC, "C:=A-B;B:=A;C/D/E")
     field(EGU , "MB/s")
+    field(PREC, "3")
     field(MDEL, "2")
     field(TSEL, "$(P)Itvl-I_.TIME")
     field(FLNK, "$(P)RXRate-I")
@@ -124,6 +129,7 @@ record(calc, "$(P)RXRate-I") {
     field(INPE, "$(P)Itvl-I_ NPP")
     field(CALC, "C:=A-B;B:=A;C/D/E")
     field(EGU , "kHz")
+    field(PREC, "3")
     field(MDEL, "1")
     field(TSEL, "$(P)Itvl-I_.TIME")
     field(FLNK, "$(P)WrtRate-I")

@@ -125,7 +125,7 @@ long devudp_get_record(biRecord* prec)
         Guard G(dev->lock);
         prec->rval = dev->record;
         return 0;
-    }CATCH(devudp_set_record, prec);
+    }CATCH(devudp_get_record, prec);
 }
 
 template<const std::string UDPFast::*STR>
