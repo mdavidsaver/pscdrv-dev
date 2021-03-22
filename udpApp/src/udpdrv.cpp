@@ -4,6 +4,9 @@
 * EPICS BASE is distributed subject to a Software License Agreement found
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
+
+#include <sstream>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -20,6 +23,7 @@
 #include <epicsTime.h>
 #include <drvSup.h>
 #include <iocsh.h>
+#include <osiFileName.h>
 
 #include <psc/device.h>
 #include "udpdrv.h"
@@ -409,7 +413,7 @@ void UDPFast::cachefn()
            timedsync("fdatasync()"),
            timeopen("open()"),
            timeclose("close()");
-    epicsUInt64 writtensinceflush = 0u;
+    epicsUInt64 filetotal = 0u;
 
     DataFD datafile;
 
@@ -512,31 +516,33 @@ void UDPFast::cachefn()
         if(inprog.empty())
             continue;
 
-        if(datafile.isOpen()) {
-            off_t pos = lseek(datafile.fd, 0, SEEK_CUR);
-            if(pos!=(off_t)-1 && pos>=off_t(PSCUDPMaxLenMB*(1u<<20u))) {
-                reopen = true;
-                if(PSCDebug>=2)
-                    errlogPrintf("%s : rotate data file for size=%zu\n", name.c_str(), size_t(pos));
-            }
-            epicsAtomicSetSizeT(&lastsize, size_t(pos));
+        if(datafile.isOpen() && filetotal>=size_t(PSCUDPMaxLenMB*(1u<<20u))) {
+            reopen = true;
+            if(PSCDebug>=2)
+                errlogPrintf("%s : rotate data file for size=%zu\n", name.c_str(), size_t(filetotal));
         }
+
+        int fileerr = 0;
 
         if(record && reopen && !filebase.empty()) { // open new file
             reopen = false;
-            writtensinceflush = 0u;
+            filetotal = 0u;
 
-            std::string fname;
+            std::ostringstream namestrm;
 
-            fname = filebase;
+            if(!filedir.empty()) {
+                namestrm << filedir << OSI_PATH_SEPARATOR;
+            }
+
+            namestrm << filebase;
 
             UnGuard U(G);
 
             char tsbuf[25];
             epicsTimeToStrftime(tsbuf, sizeof(tsbuf), "%Y%m%d-%H%M%S", &now);
 
-            fname += tsbuf;
-            fname += ".dat";
+            namestrm << tsbuf << ".dat";
+            std::string fname = namestrm.str();
 
             timeclose.start();
             datafile.close();
@@ -546,8 +552,9 @@ void UDPFast::cachefn()
             datafile.fd = ::open(fname.c_str(), O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC, 0644);
             timeopen.stop();
             if(!datafile.isOpen()) {
+                fileerr = errno;
                 errlogPrintf("%s : Error opening \"%s\" : (%d) %s\n",
-                             name.c_str(), fname.c_str(), errno, strerror(errno));
+                             name.c_str(), fname.c_str(), fileerr, strerror(fileerr));
                 record = false;
 
             } else {
@@ -561,80 +568,89 @@ void UDPFast::cachefn()
         if(!datafile.isOpen())
             continue;
 
-        UnGuard U(G);
+        {
+            UnGuard U(G);
 
-        epicsUInt64 tstart = epicsMonotonicGet();
-        size_t datatotal = 0u;
+            epicsUInt64 tstart = epicsMonotonicGet();
+            size_t datatotal = 0u;
 
-        // iterate inprog and write in batches
-        timewritev.start();
-        for(size_t i=0, N=inprog.size(); i<N && datafile.isOpen();) {
-            size_t batchtotal = 0u;
-            size_t b, B;
+            // iterate inprog and write in batches
+            timewritev.start();
+            for(size_t i=0, N=inprog.size(); i<N && datafile.isOpen();) {
+                size_t batchtotal = 0u;
+                size_t b, B;
 
-            for(b=0, B=headers.size(); i<N && b<B; i++, b++) {
-                auto& pkt = inprog[i];
-                auto& H = headers[b];
-                auto& IOhead = ios[2*b+0];
-                auto& IObody = ios[2*b+1];
+                for(b=0, B=headers.size(); i<N && b<B; i++, b++) {
+                    auto& pkt = inprog[i];
+                    auto& H = headers[b];
+                    auto& IOhead = ios[2*b+0];
+                    auto& IObody = ios[2*b+1];
 
-                H.msgid = htons(pkt.msgid);
-                H.bodylen = htonl(pkt.bodylen);
-                H.sec = htonl(pkt.rxtime.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH);
-                H.nsec = htonl(pkt.rxtime.nsec);
+                    H.msgid = htons(pkt.msgid);
+                    H.bodylen = htonl(pkt.bodylen);
+                    H.sec = htonl(pkt.rxtime.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH);
+                    H.nsec = htonl(pkt.rxtime.nsec);
 
-                IOhead.iov_base = &H;
-                IOhead.iov_len = sizeof(header_t);
-                IObody.iov_base = &pkt.body[0];
-                IObody.iov_len = pkt.bodylen;
-                batchtotal += sizeof(header_t) + pkt.bodylen;
+                    IOhead.iov_base = &H;
+                    IOhead.iov_len = sizeof(header_t);
+                    IObody.iov_base = &pkt.body[0];
+                    IObody.iov_len = pkt.bodylen;
+                    batchtotal += sizeof(header_t) + pkt.bodylen;
+                }
+
+                ssize_t ret = writev(datafile.fd, &ios[0], 2*b);
+                if(ret<0) {
+                    fileerr = errno;
+                    if(PSCDebug>=0)
+                        errlogPrintf("%s : data file write error: (%d) %s\n", name.c_str(), fileerr, strerror(fileerr));
+                    datafile.close();
+                    record = false;
+
+                } else if(size_t(ret)!=batchtotal) {
+                    if(PSCDebug>=0)
+                        errlogPrintf("%s : data file write incomplete %zd of %zu\n", name.c_str(), ret, batchtotal);
+                    datafile.close();
+                    record = false;
+                }
+
+                datatotal += batchtotal;
+            }
+            timewritev.stop();
+
+            epicsAtomicAddSizeT(&storewrote, datatotal);
+            filetotal += datatotal;
+            epicsAtomicSetSizeT(&lastsize, filetotal);
+
+            if(PSCUDPDSyncSizeMB && datafile.isOpen() && filetotal/(1u<<20u) >= size_t(PSCUDPDSyncSizeMB)) {
+                filetotal = 0u;
+                if(PSCDebug>1)
+                    errlogPrintf("%s : periodic flush\n", name.c_str());
+                timedsync.start();
+                int ret = fdatasync(datafile.fd);
+                timedsync.stop();
+                if(ret) {
+                    fileerr = errno;
+                    errlogPrintf("%s : fdatasync error %s (%d)", name.c_str(), strerror(fileerr), fileerr);
+                }
             }
 
-            ssize_t ret = writev(datafile.fd, &ios[0], 2*b);
-            if(ret<0) {
-                if(PSCDebug>=0)
-                    errlogPrintf("%s : data file write error: (%d) %s\n", name.c_str(), errno, strerror(errno));
-                datafile.close();
-                record = false;
+            epicsUInt64 tend = epicsMonotonicGet();
+            if(PSCDebug>=3) {
+                double ellapsed = (tend-tstart)/1e9; // sec
+                if(finite(ellapsed) && ellapsed>0.0) {
+                    double rate = datatotal/ellapsed; // B/s
 
-            } else if(size_t(ret)!=batchtotal) {
-                if(PSCDebug>=0)
-                    errlogPrintf("%s : data file write incomplete %zd of %zu\n", name.c_str(), ret, batchtotal);
-                datafile.close();
-                record = false;
+                    errlogPrintf("%s : data file wrote %zu B in %g ms for %.3g GB/s\n",
+                                 name.c_str(), datatotal, ellapsed*1e3, rate/double(1u<<30u));
+                }
             }
+        } // re-locked
 
-            datatotal += batchtotal;
+        if(fileerr) {
+            std::ostringstream strm;
+            strm<<"("<<fileerr<<") "<<strerror(fileerr);
+            lasterror = strm.str();
         }
-        timewritev.stop();
-
-        epicsAtomicAddSizeT(&storewrote, datatotal);
-        writtensinceflush += datatotal;
-
-        if(PSCUDPDSyncSizeMB && datafile.isOpen() && writtensinceflush/(1u<<20u) >= size_t(PSCUDPDSyncSizeMB)) {
-            writtensinceflush = 0u;
-            if(PSCDebug>1)
-                errlogPrintf("%s : periodic flush\n", name.c_str());
-            timedsync.start();
-            int err = fdatasync(datafile.fd);
-            timedsync.stop();
-            if(err) {
-                err = errno;
-                errlogPrintf("%s : fdatasync error %s (%d)", name.c_str(), strerror(err), err);
-            }
-        }
-
-        epicsUInt64 tend = epicsMonotonicGet();
-        if(PSCDebug>=3) {
-            double ellapsed = (tend-tstart)/1e9; // sec
-            if(finite(ellapsed) && ellapsed>0.0) {
-                double rate = datatotal/ellapsed; // B/s
-
-                errlogPrintf("%s : data file wrote %zu B in %g ms for %.3g GB/s\n",
-                             name.c_str(), datatotal, ellapsed*1e3, rate/double(1u<<30u));
-            }
-        }
-
     }
 
     if(PSCDebug>=2)

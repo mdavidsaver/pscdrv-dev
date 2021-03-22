@@ -53,8 +53,9 @@ struct UDPFast : public PSCBase
     epicsEvent vpoolStall;
     epicsEvent pendingReady; // set from rxWorker to wake cacheWorker
 
-    std::string filebase;
+    std::string filedir, filebase;
     std::string lastfile;
+    std::string lasterror;
     bool reopen;
     bool record;
 

@@ -208,10 +208,12 @@ long devudp_get_lastsize(int64inRecord* prec)
 
 MAKEDSET(ai, devPSCUDPIntervalAI, &devudp_init_record_period, 0, &devudp_interval);
 MAKEDSET(lso, devPSCUDPFilebaseLSO, &devudp_init_record_out, 0, &devudp_set_string<&UDPFast::filebase>);
+MAKEDSET(lso, devPSCUDPFiledirLSO, &devudp_init_record_out, 0, &devudp_set_string<&UDPFast::filedir>);
 MAKEDSET(bo, devPSCUDPReopenBO, &devudp_init_record_out, 0, &devudp_reopen);
 MAKEDSET(bo, devPSCUDPRecordBO, &devudp_init_record_out, 0, &devudp_set_record);
 MAKEDSET(bi, devPSCUDPRecordBI, &devudp_init_record_in, 0, &devudp_get_record);
 MAKEDSET(lsi, devPSCUDPFilenameLSI, &devudp_init_record_in, 0, &devudp_get_string<&UDPFast::lastfile>);
+MAKEDSET(lsi, devPSCUDPErrorLSI, &devudp_init_record_in, 0, &devudp_get_string<&UDPFast::lasterror>);
 MAKEDSET(ai, devPSCUDPvpoolAI, &devudp_init_record_in, 0, &devudp_get_vpool);
 MAKEDSET(ai, devPSCUDPpendingAI, &devudp_init_record_in, 0, &devudp_get_pending);
 MAKEDSET(ai, devPSCUDPinprogAI, &devudp_init_record_in, 0, &devudp_get_inprog);
@@ -228,10 +230,12 @@ MAKEDSET(int64in, devPSCUDPnoomI64I, &devudp_init_record_in, 0, &devudp_get_coun
 extern "C" {
 epicsExportAddress(dset, devPSCUDPIntervalAI);
 epicsExportAddress(dset, devPSCUDPFilebaseLSO);
+epicsExportAddress(dset, devPSCUDPFiledirLSO);
 epicsExportAddress(dset, devPSCUDPReopenBO);
 epicsExportAddress(dset, devPSCUDPRecordBO);
 epicsExportAddress(dset, devPSCUDPRecordBI);
 epicsExportAddress(dset, devPSCUDPFilenameLSI);
+epicsExportAddress(dset, devPSCUDPErrorLSI);
 epicsExportAddress(dset, devPSCUDPvpoolAI);
 epicsExportAddress(dset, devPSCUDPpendingAI);
 epicsExportAddress(dset, devPSCUDPinprogAI);
