@@ -171,12 +171,31 @@ record(calc, "$(P)DrpRate-I") {
     field(HIGH, "0.1")
     field(HSV , "MAJOR")
     field(TSEL, "$(P)Itvl-I_.TIME")
-    field(FLNK, "$(P)TmoRate-I")
+    field(FLNK, "$(P)IgnRate-I")
 }
 
 record(int64in, "$(P)NDrp-I") {
-    field(DESC, "packets dropped")
+    field(DESC, "packets ignored")
     field(DTYP, "PSCUDPFast #drop")
+    field(INP , "@$(NAME)")
+    field(TSEL, "$(P)Itvl-I_.TIME")
+}
+
+record(calc, "$(P)IgnRate-I") {
+    field(INPA, "$(P)NIgn-I PP MSI")
+    field(INPD, "1")
+    field(INPE, "$(P)Itvl-I_ NPP")
+    field(CALC, "C:=A-B;B:=A;C/D/E")
+    field(EGU , "Hz")
+    field(HIGH, "0.1")
+    field(HSV , "MAJOR")
+    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(FLNK, "$(P)TmoRate-I")
+}
+
+record(int64in, "$(P)NIgn-I") {
+    field(DESC, "packets dropped")
+    field(DTYP, "PSCUDPFast #ignore")
     field(INP , "@$(NAME)")
     field(TSEL, "$(P)Itvl-I_.TIME")
 }

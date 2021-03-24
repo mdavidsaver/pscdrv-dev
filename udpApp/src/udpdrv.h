@@ -24,6 +24,7 @@ struct UDPFast : public PSCBase
     size_t rxcnt;
     size_t ntimeout;
     size_t ndrops;
+    size_t nignore;
     size_t noom;
     size_t lastsize;
 

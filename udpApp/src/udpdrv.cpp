@@ -105,6 +105,7 @@ UDPFast::UDPFast(const std::string& name,
     ,rxcnt(0u)
     ,ntimeout(0u)
     ,ndrops(0u)
+    ,nignore(0u)
     ,noom(0u)
     ,lastsize(0u)
     ,netrx(0u)
@@ -359,16 +360,19 @@ void UDPFast::rxfn() {
             }
 
             if(evutil_sockaddr_cmp(&peer.sa, &msg.src.sa, 1)!=0) {
+                epicsAtomicIncrSizeT(&nignore);
                 if(PSCDebug>0)
                     errlogPrintf("%s : ignore packet not from peer\n", name.c_str());
                 continue;
 
             } else if(len<8u) {
+                epicsAtomicIncrSizeT(&nignore);
                 if(PSCDebug>=0)
-                    errlogPrintf("%s : truncated packet\n", name.c_str());
+                    errlogPrintf("%s : truncated packet header\n", name.c_str());
                 continue;
 
             } else if(msg.P!='P' || msg.S!='S') {
+                epicsAtomicIncrSizeT(&nignore);
                 if(PSCDebug>=0)
                     errlogPrintf("%s : invalid header packet\n", name.c_str());
                 continue;
@@ -377,7 +381,8 @@ void UDPFast::rxfn() {
             epicsUInt16 msgid = ntohs(msg.msgid);
             epicsUInt32 blen = ntohl(msg.blen);
 
-            if(blen > len-8u) {
+            if(blen < len-8u) {
+                epicsAtomicIncrSizeT(&nignore);
                 if(PSCDebug>=0)
                     errlogPrintf("%s : truncated packet body %u > %u\n", name.c_str(),
                                  unsigned(blen), unsigned(len-8u));
