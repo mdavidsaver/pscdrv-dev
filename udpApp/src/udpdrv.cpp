@@ -377,12 +377,16 @@ void UDPFast::rxfn() {
             epicsUInt16 msgid = ntohs(msg.msgid);
             epicsUInt32 blen = ntohl(msg.blen);
 
-            if(blen < len-8u) {
+            if(blen > len-8u) {
                 if(PSCDebug>=0)
                     errlogPrintf("%s : truncated packet body %u > %u\n", name.c_str(),
                                  unsigned(blen), unsigned(len-8u));
                 continue;
             }
+
+            if(PSCDebug>2)
+                timefprintf(stderr, "%s: recv'd block %u with %lu bytes\n",
+                        name.c_str(), msgid, (unsigned long)blen);
 
             totalrx += len + 16 + 20 + 8; // add assumed sizes of unseen ethernet, ipv4, and UDP headers
 

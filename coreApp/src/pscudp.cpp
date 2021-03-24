@@ -256,6 +256,10 @@ void PSCUDP::recvdata(short evt)
             continue;
         }
 
+        if(PSCDebug>2)
+            timefprintf(stderr, "%s: recv'd block %u with %lu bytes\n",
+                    name.c_str(), header, (unsigned long)bodylen);
+
         block_map::const_iterator it=recv_blocks.find(header);
         if(it!=recv_blocks.end()) {
             Block& bodyblock = *it->second;
