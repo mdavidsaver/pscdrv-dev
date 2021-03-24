@@ -696,6 +696,7 @@ void createPSCUDPFast(const char* name, const char* host, int hostport, int ifac
     try {
         (void)new UDPFast(name, host, hostport, ifaceport);
     }catch(std::exception& e){
+        iocshSetError(1);
         fprintf(stderr, "Error: %s\n", e.what());
     }
 }

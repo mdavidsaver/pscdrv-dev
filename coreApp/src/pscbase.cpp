@@ -191,6 +191,7 @@ void createPSC(const char* name, const char* host, int port, int timeout)
     try{
         new PSC(name, host, port, timeout);
     }catch(std::exception& e){
+        iocshSetError(1);
         timefprintf(stderr, "Failed to create PSC '%s': %s\n", name, e.what());
     }
 }
@@ -201,6 +202,7 @@ void createPSCUDP(const char* name, const char* host, int hostport, int ifacepor
     try{
         new PSCUDP(name, host, hostport, ifaceport, 0);
     }catch(std::exception& e){
+        iocshSetError(1);
         timefprintf(stderr, "Failed to create PSCUDP '%s': %s\n", name, e.what());
     }
 }

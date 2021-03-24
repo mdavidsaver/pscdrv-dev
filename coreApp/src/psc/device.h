@@ -15,6 +15,8 @@
 #include <epicsGuard.h>
 #include <epicsEvent.h>
 #include <epicsTime.h>
+#include <epicsVersion.h>
+#include <iocsh.h>
 #include <dbCommon.h>
 
 #include <string>
@@ -37,6 +39,11 @@
 #  ifndef final
 #    define final
 #  endif
+#endif
+
+#if EPICS_VERSION_INT<VERSION_INT(7,0,4,0)
+static inline
+int iocshSetError(int err) {return err;}
 #endif
 
 extern "C" {
