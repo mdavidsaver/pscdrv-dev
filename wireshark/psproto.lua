@@ -97,5 +97,7 @@ end
 local ttbl = DissectorTable.get("tcp.port")
 -- port 8765 is arbitrary, change as necessary
 ttbl:add(8765, psc)
+ttbl = DissectorTable.get("udp.port")
+ttbl:add(8765, psc)
 
 print("Loaded psproto.lua")
