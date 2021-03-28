@@ -37,6 +37,7 @@ struct UDPFast : public PSCBase
     //   vpool
     //   pending
     //   inprog - local to rxfn()
+    //   shortBuf
     // guarded by rxLock
     vecs_t vpool;
 
@@ -45,6 +46,11 @@ struct UDPFast : public PSCBase
         size_t bodylen;
         epicsTimeStamp rxtime;
         epicsUInt16 msgid;
+
+        pkt() :bodylen(0u), msgid(0u) {
+            rxtime.secPastEpoch = rxtime.nsec = 0u;
+        }
+        void swap(pkt& o);
     };
 
     // guarded by rxLock
@@ -59,6 +65,10 @@ struct UDPFast : public PSCBase
     std::string lasterror;
     bool reopen;
     bool record;
+
+    epicsMutex shortLock;
+    pkts_t shortBuf;
+    size_t shortLimit;
 
     // rx worker pulls from socket buffer and pushes to 'pending'
     struct RXWorker : public epicsThreadRunable

@@ -13,10 +13,14 @@
 #include <boRecord.h>
 #include <biRecord.h>
 #include <aiRecord.h>
+#include <longinRecord.h>
 #include <int64inRecord.h>
+#include <aaiRecord.h>
+#include <menuFtype.h>
 
 #include "psc/devcommon.h"
 #include "udpdrv.h"
+#include "utilpvt.h"
 
 #include <epicsExport.h>
 
@@ -206,6 +210,121 @@ long devudp_get_lastsize(int64inRecord* prec)
     }CATCH(devudp_get_lastsize, prec);
 }
 
+struct privShortBuf {
+    UDPFast *psc;
+    unsigned int block;
+    unsigned long offset;
+};
+
+long devudp_clear_shortbuf(longinRecord *prec)
+{
+    TRY {
+        UDPFast::pkts_t temp;
+        {
+            Guard S(dev->shortLock);
+            temp.swap(dev->shortBuf);
+        }
+        {
+            Guard G(dev->rxLock);
+            for(size_t i=0u, N=temp.size(); i<N; i++) {
+                dev->vpool.push_back(UDPFast::vecs_t::value_type());
+                dev->vpool.back().swap(temp[i].body);
+                assert(!dev->vpool.back().empty());
+            }
+        }
+        prec->val += (epicsInt32)temp.size();
+        return 0;
+
+    }CATCH(devudp_clear_shortbuf, prec);
+}
+
+#undef TRY
+#define TRY if(!prec->dpvt) return -1; privShortBuf *priv = (privShortBuf*)prec->dpvt; (void)priv; try
+
+template<typename R>
+long devudp_init_record_shortbuf(R* prec)
+{
+    try {
+        const char *link = prec->inp.value.instio.string;
+        std::istringstream strm(link);
+        std::string name;
+        unsigned int block;
+        unsigned long offset = 0;
+
+        strm >> name >> block;
+        if(!strm.eof())
+            strm >> offset;
+
+        if(strm.fail()) {
+            timefprintf(stderr, "%s: Error Parsing: '%s'\n",
+                    prec->name, link);
+            throw std::runtime_error("Link parsing error");
+        } else if(!strm.eof()) {
+            timefprintf(stderr, "%s: link parsing found \'%s\' instead of EOS\n",
+                    prec->name, strm.str().substr(strm.tellg()).c_str());
+        }
+
+        psc::auto_ptr<privShortBuf> priv(new privShortBuf);
+        priv->psc = PSC::getPSC<UDPFast>(name);
+        priv->block = block;
+        priv->offset = offset;
+
+        prec->dpvt = (void*)priv.release();
+        return 0;
+
+    }CATCH(devudp_init_record_shortbuf, prec);
+}
+
+long devudp_read_shortbuf(aaiRecord* prec)
+{
+    if(prec->ftvl!=menuFtypeULONG) {
+        (void)recGblSetSevr(prec, STATE_ALARM, INVALID_ALARM);
+        return 0;
+    }
+
+    TRY {
+        Guard S(priv->psc->shortLock);
+
+        if(!priv->psc->isConnected()) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+        }
+
+        if(priv->psc->shortLimit < prec->nelm) {
+            // automatically expand
+            priv->psc->shortLimit = prec->nelm;
+        }
+
+        size_t N = std::min(size_t(prec->nelm), priv->psc->shortBuf.size());
+        epicsUInt32* arr = static_cast<epicsUInt32*>(prec->bptr);
+
+        for(size_t i=0; i<N; i++) {
+            const UDPFast::pkt& pkt = priv->psc->shortBuf[i];
+            if(pkt.msgid != priv->block)
+                continue;
+
+            if(i==0u && prec->tse==epicsTimeEventDeviceTime)
+                prec->time = pkt.rxtime;
+
+            epicsUInt32 rval = 0u;
+
+            if(priv->offset + 4u > pkt.body.size()) {
+                (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+
+            } else {
+                memcpy(&rval, &pkt.body[priv->offset], 4u);
+            }
+
+            arr[i] = ntohl(rval);
+        }
+
+        prec->nord = epicsUInt32(N);
+        return 0;
+
+    }CATCH(devudp_read_shortbuf, prec);
+}
+
+#undef TRY
+
 MAKEDSET(ai, devPSCUDPIntervalAI, &devudp_init_record_period, 0, &devudp_interval);
 MAKEDSET(lso, devPSCUDPFilebaseLSO, &devudp_init_record_out, 0, &devudp_set_string<&UDPFast::filebase>);
 MAKEDSET(lso, devPSCUDPFiledirLSO, &devudp_init_record_out, 0, &devudp_set_string<&UDPFast::filedir>);
@@ -225,6 +344,8 @@ MAKEDSET(int64in, devPSCUDPlastsizeI64I, &devudp_init_record_in, 0, &devudp_get_
 MAKEDSET(int64in, devPSCUDPnrxI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::rxcnt>);
 MAKEDSET(int64in, devPSCUDPntimeoutI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::ntimeout>);
 MAKEDSET(int64in, devPSCUDPnoomI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::noom>);
+MAKEDSET(longin, devPSCUDPShortClearLI, &devudp_init_record_in, 0, &devudp_clear_shortbuf);
+MAKEDSET(aai, devPSCUDPShortGetAAI, &devudp_init_record_shortbuf, 0, &devudp_read_shortbuf);
 
 }
 
@@ -248,4 +369,6 @@ epicsExportAddress(dset, devPSCUDPlastsizeI64I);
 epicsExportAddress(dset, devPSCUDPnrxI64I);
 epicsExportAddress(dset, devPSCUDPntimeoutI64I);
 epicsExportAddress(dset, devPSCUDPnoomI64I);
+epicsExportAddress(dset, devPSCUDPShortClearLI);
+epicsExportAddress(dset, devPSCUDPShortGetAAI);
 }

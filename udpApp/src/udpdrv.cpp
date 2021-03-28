@@ -94,6 +94,15 @@ struct PTimer {
 
 } // namespace
 
+void UDPFast::pkt::swap(pkt &o)
+{
+    if(this!=&o) {
+        std::swap(body, o.body);
+        std::swap(bodylen, o.bodylen);
+        std::swap(rxtime, o.rxtime);
+        std::swap(msgid, o.msgid);
+    }
+}
 
 UDPFast::UDPFast(const std::string& name,
                  const std::string& host,
@@ -112,6 +121,7 @@ UDPFast::UDPFast(const std::string& name,
     ,storewrote(0u)
     ,reopen(true)
     ,record(false)
+    ,shortLimit(0u)
     ,rxjob(this)
     ,rxworker(rxjob, "udpfrx", epicsThreadGetStackSize(epicsThreadStackBig), epicsThreadPriorityHigh+1)
     ,cachejob(this)
@@ -574,85 +584,100 @@ void UDPFast::cachefn()
 
         }
 
-        if(!datafile.isOpen())
-            continue;
-
         {
             UnGuard U(G);
 
-            epicsUInt64 tstart = epicsMonotonicGet();
-            size_t datatotal = 0u;
+            if(datafile.isOpen()) {
 
-            // iterate inprog and write in batches
-            timewritev.start();
-            for(size_t i=0, N=inprog.size(); i<N && datafile.isOpen();) {
-                size_t batchtotal = 0u;
-                size_t b, B;
+                epicsUInt64 tstart = epicsMonotonicGet();
+                size_t datatotal = 0u;
 
-                for(b=0, B=headers.size(); i<N && b<B; i++, b++) {
-                    auto& pkt = inprog[i];
-                    auto& H = headers[b];
-                    auto& IOhead = ios[2*b+0];
-                    auto& IObody = ios[2*b+1];
+                // iterate inprog and write in batches
+                timewritev.start();
+                for(size_t i=0, N=inprog.size(); i<N && datafile.isOpen();) {
+                    size_t batchtotal = 0u;
+                    size_t b, B;
 
-                    H.msgid = htons(pkt.msgid);
-                    H.bodylen = htonl(pkt.bodylen);
-                    H.sec = htonl(pkt.rxtime.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH);
-                    H.nsec = htonl(pkt.rxtime.nsec);
+                    for(b=0, B=headers.size(); i<N && b<B; i++, b++) {
+                        auto& pkt = inprog[i];
+                        auto& H = headers[b];
+                        auto& IOhead = ios[2*b+0];
+                        auto& IObody = ios[2*b+1];
 
-                    IOhead.iov_base = &H;
-                    IOhead.iov_len = sizeof(header_t);
-                    IObody.iov_base = &pkt.body[0];
-                    IObody.iov_len = pkt.bodylen;
-                    batchtotal += sizeof(header_t) + pkt.bodylen;
+                        H.msgid = htons(pkt.msgid);
+                        H.bodylen = htonl(pkt.bodylen);
+                        H.sec = htonl(pkt.rxtime.secPastEpoch + POSIX_TIME_AT_EPICS_EPOCH);
+                        H.nsec = htonl(pkt.rxtime.nsec);
+
+                        IOhead.iov_base = &H;
+                        IOhead.iov_len = sizeof(header_t);
+                        IObody.iov_base = &pkt.body[0];
+                        IObody.iov_len = pkt.bodylen;
+                        batchtotal += sizeof(header_t) + pkt.bodylen;
+                    }
+
+                    ssize_t ret = writev(datafile.fd, &ios[0], 2*b);
+                    if(ret<0) {
+                        fileerr = errno;
+                        if(PSCDebug>=0)
+                            errlogPrintf("%s : data file write error: (%d) %s\n", name.c_str(), fileerr, strerror(fileerr));
+                        datafile.close();
+                        record = false;
+
+                    } else if(size_t(ret)!=batchtotal) {
+                        if(PSCDebug>=0)
+                            errlogPrintf("%s : data file write incomplete %zd of %zu\n", name.c_str(), ret, batchtotal);
+                        datafile.close();
+                        record = false;
+                    }
+
+                    datatotal += batchtotal;
+                }
+                timewritev.stop();
+
+                epicsAtomicAddSizeT(&storewrote, datatotal);
+                filetotal += datatotal;
+                epicsAtomicSetSizeT(&lastsize, filetotal);
+
+                if(PSCUDPDSyncSizeMB && datafile.isOpen() && filetotal/(1u<<20u) >= size_t(PSCUDPDSyncSizeMB)) {
+                    filetotal = 0u;
+                    if(PSCDebug>1)
+                        errlogPrintf("%s : periodic flush\n", name.c_str());
+                    timedsync.start();
+                    int ret = fdatasync(datafile.fd);
+                    timedsync.stop();
+                    if(ret) {
+                        fileerr = errno;
+                        errlogPrintf("%s : fdatasync error %s (%d)", name.c_str(), strerror(fileerr), fileerr);
+                    }
                 }
 
-                ssize_t ret = writev(datafile.fd, &ios[0], 2*b);
-                if(ret<0) {
-                    fileerr = errno;
-                    if(PSCDebug>=0)
-                        errlogPrintf("%s : data file write error: (%d) %s\n", name.c_str(), fileerr, strerror(fileerr));
-                    datafile.close();
-                    record = false;
+                epicsUInt64 tend = epicsMonotonicGet();
+                if(PSCDebug>=3) {
+                    double ellapsed = (tend-tstart)/1e9; // sec
+                    if(finite(ellapsed) && ellapsed>0.0) {
+                        double rate = datatotal/ellapsed; // B/s
 
-                } else if(size_t(ret)!=batchtotal) {
-                    if(PSCDebug>=0)
-                        errlogPrintf("%s : data file write incomplete %zd of %zu\n", name.c_str(), ret, batchtotal);
-                    datafile.close();
-                    record = false;
+                        errlogPrintf("%s : data file wrote %zu B in %g ms for %.3g GB/s\n",
+                                     name.c_str(), datatotal, ellapsed*1e3, rate/double(1u<<30u));
+                    }
                 }
 
-                datatotal += batchtotal;
             }
-            timewritev.stop();
 
-            epicsAtomicAddSizeT(&storewrote, datatotal);
-            filetotal += datatotal;
-            epicsAtomicSetSizeT(&lastsize, filetotal);
+            {
+                Guard S(shortLock);
+                const size_t istart = shortBuf.size();
+                if(const size_t nmove = std::min(inprog.size(), shortLimit - istart)) {
 
-            if(PSCUDPDSyncSizeMB && datafile.isOpen() && filetotal/(1u<<20u) >= size_t(PSCUDPDSyncSizeMB)) {
-                filetotal = 0u;
-                if(PSCDebug>1)
-                    errlogPrintf("%s : periodic flush\n", name.c_str());
-                timedsync.start();
-                int ret = fdatasync(datafile.fd);
-                timedsync.stop();
-                if(ret) {
-                    fileerr = errno;
-                    errlogPrintf("%s : fdatasync error %s (%d)", name.c_str(), strerror(fileerr), fileerr);
+                    shortBuf.resize(istart + nmove);
+
+                    std::swap_ranges(shortBuf.begin()+istart,
+                                     shortBuf.end(),
+                                     inprog.begin());
                 }
             }
 
-            epicsUInt64 tend = epicsMonotonicGet();
-            if(PSCDebug>=3) {
-                double ellapsed = (tend-tstart)/1e9; // sec
-                if(finite(ellapsed) && ellapsed>0.0) {
-                    double rate = datatotal/ellapsed; // B/s
-
-                    errlogPrintf("%s : data file wrote %zu B in %g ms for %.3g GB/s\n",
-                                 name.c_str(), datatotal, ellapsed*1e3, rate/double(1u<<30u));
-                }
-            }
         } // re-locked
 
         if(fileerr) {

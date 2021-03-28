@@ -53,3 +53,17 @@ record(calc, "$(P)rx:rate") {
   field(CALC, "C:=A-B;B:=A;C")
   field(EGU , "Hz")
 }
+
+record(aai, "$(P)seq:wf") {
+  field(DTYP, "PSCUDPFast Get Short")
+  field(INP , "@test 12345 0")
+  field(SCAN, "1 second")
+  field(FTVL, "ULONG")
+  field(NELM, "16")
+  field(FLNK, "$(P)seq:clr")
+}
+
+record(longin, "$(P)seq:clr") {
+  field(DTYP, "PSCUDPFast Clear Short")
+  field(INP , "@test")
+}
