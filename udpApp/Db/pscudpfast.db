@@ -1,4 +1,5 @@
 
+# output data file is FileDir+FileBase+"-YYYYMMDD-HHMMSS.dat"
 record(lso, "$(P)FileBase-SP") {
     field(DESC, "Base file name")
     field(DTYP, "PSCUDPFast filebase")
