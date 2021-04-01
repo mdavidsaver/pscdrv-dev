@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 The PSC Driver
-========================
+==============
 
 Overview
 ========
@@ -33,6 +33,7 @@ Contents:
    building
    processing
    devsup
+   udpfast
 
 
 Indices and tables

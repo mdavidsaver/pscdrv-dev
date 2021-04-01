@@ -51,6 +51,11 @@ Then add the pscdrv (and optionally pscSig) libraries as a dependencies to your 
     myioc_LIBS += pscSig
     endif
     
+    ifneq (YES,$(USE_UDPFAST))
+    myioc_DBD += pscSig.dbd
+    myioc_LIBS += pscSig
+    endif
+    
     myioc_LIBS += pscCore
     myioc_LIBS += $(EPICS_BASE_IOC_LIBS)
 
