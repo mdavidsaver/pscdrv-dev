@@ -23,6 +23,8 @@ Build: ::
     make -C epics-base
     make -C pscdrv
 
+.. _includinginioc:
+
 Including pscdrv in your IOC
 ----------------------------
 
