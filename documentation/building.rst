@@ -23,6 +23,8 @@ Build: ::
     make -C epics-base
     make -C pscdrv
 
+.. _includinginioc:
+
 Including pscdrv in your IOC
 ----------------------------
 
@@ -47,6 +49,11 @@ Then add the pscdrv (and optionally pscSig) libraries as a dependencies to your 
     myioc_DBD += pscCore.dbd
     
     ifneq (YES,$(USE_FFTW))
+    myioc_DBD += pscSig.dbd
+    myioc_LIBS += pscSig
+    endif
+    
+    ifneq (YES,$(USE_UDPFAST))
     myioc_DBD += pscSig.dbd
     myioc_LIBS += pscSig
     endif

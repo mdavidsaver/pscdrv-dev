@@ -1,4 +1,5 @@
 PYTHON?=python3
+DIA?=dia
 
 # documentation generation requires Doxygen and Sphinx with the breathe extension
 #
@@ -7,14 +8,22 @@ PYTHON?=python3
 all: gen
 
 clean:
+	rm -f buffering.svg
 	rm -rf xml pvxs.tag
 	rm -rf html _build
 
 # conf.py reads CONFIG_PVXS_VERSION to extract version number
-gen:
+gen: buffering.svg html/.nojekyll
 	$(PYTHON) -m sphinx -j auto -b html . html
 
 commit: gen
 	./commit-gh.sh documentation/html/ html/.nojekyll html/*.* html/_*/*.*
 
 .PHONY: all clean gen commit
+
+%.svg: %.dia
+	$(DIA) -n -e $@ $<
+
+html/.nojekyll:
+	install -d html
+	touch $@

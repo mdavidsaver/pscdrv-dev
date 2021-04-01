@@ -1,3 +1,5 @@
+.. _devsup:
+
 Device Supports
 ===============
 
@@ -105,6 +107,8 @@ See Driver Data Flow. ::
         field(ONAM, "Send")
     }
 
+.. _devsupreg:
+
 Register Block Access
 ---------------------
 
@@ -170,6 +174,7 @@ DTYP="PSC Reg" operates on a signed 32-bit integer.
 Alternately, DTYP="PSC Reg F32" or DTYP="PSC Reg F64"
 may be used to operate on 32 or 64-bit IEEE floating point values.
 
+.. _devsupblock:
 
 Waveform Block Access
 ---------------------
