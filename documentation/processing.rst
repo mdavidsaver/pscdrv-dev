@@ -40,7 +40,7 @@ New messages are fully received (header and body) before any further processing.
 Once received, the message ID is compared against a list of "interesting" message IDs,
 and silently discarded if there is no match.
 
-.. image:: message-rx.png
+.. image:: message-rx.svg
 
 If it is "interesting", the body bytes are moved to a per-message ID RX buffer.
 This is a persistent buffer containing the most recently received message (body bytes and reception time).
