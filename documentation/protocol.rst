@@ -5,7 +5,7 @@ The PSC transport protocol uses TCP to transport a bi-direction stream of messag
 between a device and an IOC.
 Each message consists of a fixed length 8 byte header followed by a variable length body.
 
-.. image:: message-stream.png
+.. image:: message-stream.svg
 
 The header has 3 fields: framing marker (2 bytes), message ID (2 bytes), and body length (4 bytes).
 The framing marker is ASCII charactors 'P' and 'S'.
