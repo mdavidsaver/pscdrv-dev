@@ -16,7 +16,6 @@ DBD += pscdemo.dbd
 pscdemo_DBD += base.dbd
 pscdemo_DBD += system.dbd
 pscdemo_DBD += pscCore.dbd
-pscdemo_DBD += pscudp.dbd
 
 ifdef EPICS_QSRV_MAJOR_VERSION
 pscdemo_DBD += PVAServerRegister.dbd
@@ -30,7 +29,9 @@ pscdemo_DBD += asSupport.dbd
 pscdemo_LIBS += autosave
 endif
 
-pscdemo_LIBS += pscudp
+pscdemo_DBD += pscUDPFast.dbd
+pscdemo_LIBS += pscUDPFast
+
 pscdemo_LIBS += pscCore
 
 # pscdemo_registerRecordDeviceDriver.cpp derives from pscdemo.dbd

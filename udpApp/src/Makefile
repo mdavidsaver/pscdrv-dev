@@ -8,22 +8,22 @@ include $(TOP)/configure/CONFIG
 USR_CPPFLAGS += -I$(TOP)/coreApp/src
 USR_CPPFLAGS += -D_FILE_OFFSET_BITS=64
 
-DBD += pscudp.dbd
+DBD += pscUDPFast.dbd
 
-LIBRARY += pscudp
+LIBRARY += pscUDPFast
 
 # library uses features recvmmsg() not found in winsock, RTEMS <5, or (likely) vxWorks
 # not likely to find a 10G NIC with RTEMS/vxWorks anyway.
 ifdef BASE_7_0
-pscudp_SRCS += udpdrv.cpp
-pscudp_SRCS += devudp.cpp
-pscudp_dbd = ../pscudp-7.dbd
+pscUDPFast_SRCS += udpdrv.cpp
+pscUDPFast_SRCS += devudp.cpp
+pscUDPFast_dbd = ../pscUDPFast-7.dbd
 else
-pscudp_SRCS += empty.c
-pscudp_dbd = ../pscudp-dummy.dbd
+pscUDPFast_SRCS += empty.c
+pscUDPFast_dbd = ../pscUDPFast-dummy.dbd
 endif
 
-pscudp_LIBS += $(EPICS_BASE_IOC_LIBS)
+pscUDPFast_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #===========================
 
@@ -31,9 +31,9 @@ include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
 
-pscudp.dbd$(DEP): $(pscudp_dbd)
+pscUDPFast.dbd$(DEP): $(pscUDPFast_dbd)
 	@$(RM) $@
 	@echo "$(COMMONDEP_TARGET): ../Makefile" > $@
 
-$(COMMON_DIR)/pscudp.dbd: $(pscudp_dbd)
-	$(CAT) $(pscudp_dbd) > $@
+$(COMMON_DIR)/pscUDPFast.dbd: $(pscUDPFast_dbd)
+	$(CAT) $(pscUDPFast_dbd) > $@
