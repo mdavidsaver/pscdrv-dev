@@ -41,7 +41,7 @@ int PSCUDPMaxPacketSize = 1024;
 // max RX packet rate (pkt/sec)
 double PSCUDPMaxPacketRate = 280000.0;
 // max time between disk flush (sec)
-double PSCUDPMaxFlushPeriod = 1.0;
+double PSCUDPBufferPeriod = 1.0;
 // max data file size before rotation (MB)
 double PSCUDPMaxLenMB = 2000;
 // size to request with SO_RCVBUF
@@ -175,7 +175,7 @@ UDPFast::UDPFast(const std::string& name,
 
     // pre-allocate buffers to handle 2 periods of data.
     // one accumulating, and another flushing
-    vpoolTotal = size_t(std::max(1.0, 2*PSCUDPMaxPacketRate*PSCUDPMaxFlushPeriod));
+    vpoolTotal = size_t(std::max(1.0, 2*PSCUDPMaxPacketRate*PSCUDPBufferPeriod));
     vpool.resize(vpoolTotal);
     for(size_t i=0; i<vpool.size(); i++)
         vpool[i].resize(maxpktlen);
@@ -788,7 +788,7 @@ epicsExportRegistrar(pscudp);
 epicsExportAddress(drvet, drvUDPFast);
 epicsExportAddress(int, PSCUDPMaxPacketSize);
 epicsExportAddress(double, PSCUDPMaxPacketRate);
-epicsExportAddress(double, PSCUDPMaxFlushPeriod);
+epicsExportAddress(double, PSCUDPBufferPeriod);
 epicsExportAddress(double, PSCUDPMaxLenMB);
 epicsExportAddress(int, PSCUDPSetSockBuf);
 epicsExportAddress(int, PSCUDPDSyncSizeMB);

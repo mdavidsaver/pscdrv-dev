@@ -19,7 +19,7 @@ Larger packets will be ignored.
 `PSCUDPMaxPacketRate` (default 280000) Estimated maximum packet rate in packets per second.
 Used to size pool of pre-allocated packet buffers.
 
-`PSCUDPMaxFlushPeriod` (default 1.0) Estimated time in seconds to buffer packets.
+`PSCUDPBufferPeriod` (default 1.0) Estimated time in seconds to buffer packets.
 Expected to be based on disk write (aka. flush) time.
 
 `PSCUDPMaxLenMB` (default 2000) File size at which to rotate to a new/empty file.
