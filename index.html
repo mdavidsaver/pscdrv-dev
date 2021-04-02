@@ -1,0 +1,158 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>The PSC Driver &#8212; pscdrv  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PSC TCP Protocol" href="protocol.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="protocol.html" title="PSC TCP Protocol"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">pscdrv  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-psc-driver">
+<h1>The PSC Driver<a class="headerlink" href="#the-psc-driver" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>The PSC (Portable Streaming Controller) driver is a general purpose
+driver which speaks a TCP/IP based protocol designed to be implemented in custom
+ethernet attached devices.  The goal is to provide a robust framework to enable
+hardware engineers to create EPICS support for a new device without extensive
+knowledge about EPICS driver writing.</p>
+<p>The protocol uses TCP to exchange a series a variable length binary messages.
+The design emphasizes full duplex operation to fully utilize available bandwidth.
+:math:2^16` message identifiers are available.
+It is up to the engineer to assign meaning to these messages.
+The PSC driver provides the means to extract and assemble messages
+to/from values in EPICS records (scalar and array).</p>
+<p>Source: <a class="reference external" href="http://github.com/mdavidsaver/pscdrv">http://github.com/mdavidsaver/pscdrv</a></p>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="protocol.html">PSC TCP Protocol</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="protocol.html#single-register-sub-protocol">Single Register Sub-protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="protocol.html#protocol-usage-and-device-design">Protocol Usage and Device Design</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="building.html#including-pscdrv-in-your-ioc">Including pscdrv in your IOC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building.html#connecting-to-a-device">Connecting to a device</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="processing.html">Message Processing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="processing.html#message-reception">Message Reception</a></li>
+<li class="toctree-l2"><a class="reference internal" href="processing.html#message-transmission">Message Transmission</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devsup.html">Device Supports</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devsup.html#internal">Internal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devsup.html#register-block-access">Register Block Access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devsup.html#waveform-block-access">Waveform Block Access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devsup.html#single-register-writes">Single Register Writes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="udpfast.html">UDP “Fast” Receiver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="udpfast.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="udpfast.html#admin-setup">Admin setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="udpfast.html#file-writing">File Writing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="udpfast.html#operation">Operation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The PSC Driver</a></li>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="protocol.html"
+                        title="next chapter">PSC TCP Protocol</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="protocol.html" title="PSC TCP Protocol"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">pscdrv  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Michael Davidsaver.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

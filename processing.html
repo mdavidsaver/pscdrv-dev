@@ -1,0 +1,175 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Message Processing &#8212; pscdrv  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Device Supports" href="devsup.html" />
+    <link rel="prev" title="Building from Source" href="building.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="devsup.html" title="Device Supports"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="building.html" title="Building from Source"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pscdrv  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="message-processing">
+<h1>Message Processing<a class="headerlink" href="#message-processing" title="Permalink to this headline">¶</a></h1>
+<p>The PSC driver treats each TCP socket as a pair of independent streams (Tx and Rx).
+Thus the handling of messages in each case is separate.
+The Driver makes no association between (for example) a message id 5 which is sent,
+and one which is received.</p>
+<div class="section" id="message-reception">
+<h2>Message Reception<a class="headerlink" href="#message-reception" title="Permalink to this headline">¶</a></h2>
+<p>The Driver maintains a list of message IDs for which some code is “interested”.
+Any code which will read the body bytes or reception time associated with a message ID is “interested”.
+Usually this will be an input Record.</p>
+<p>For example, the following records are “interested” in message IDs #14, #42, and #100.
+ID #14 will be interpreted as an variable length array of 16-bit signed integers.
+ID #42 is one 32-bit integer register is a block of registers.
+ID #100 is a variable length ASCII string.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="s2">&quot;$(P)wfin-I&quot;</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Block I16 In&quot;</span><span class="p">)</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME) 14&quot;</span><span class="p">)</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">FTVL</span><span class="p">,</span> <span class="s2">&quot;DOUBLE&quot;</span><span class="p">)</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">NELM</span><span class="p">,</span> <span class="s2">&quot;10&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="n">record</span><span class="p">(</span><span class="n">longin</span><span class="p">,</span> <span class="s2">&quot;$(P)regX-I&quot;</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Reg&quot;</span><span class="p">)</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span> <span class="s2">&quot;@$(NAME) 42 4&quot;</span><span class="p">)</span> <span class="c1"># msg 42, offset 4</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="n">record</span><span class="p">(</span><span class="n">stringin</span><span class="p">,</span> <span class="s2">&quot;$(P)hear&quot;</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Block&quot;</span><span class="p">)</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@test 100&quot;</span><span class="p">)</span>
+  <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>New messages are fully received (header and body) before any further processing.
+Once received, the message ID is compared against a list of “interesting” message IDs,
+and silently discarded if there is no match.</p>
+<img alt="_images/message-rx.svg" src="_images/message-rx.svg" /><p>If it is “interesting”, the body bytes are moved to a per-message ID RX buffer.
+This is a persistent buffer containing the most recently received message (body bytes and reception time).</p>
+<p>Each buffer (and thus each received message ID)
+has an associated EPICS “I/O Intr” scan list for use by records which will be processed
+each time a new message with that ID is received.
+There is also a list of callback functions which may be used as an extension point.</p>
+<p>Some care is necessary with high message rates.
+Since messages are queued, and “I/O Intr” scanning is done on a different thread, it is possible
+for messages to be received at a higher rate then records scan.
+In this situation messages may be “lost” (not “seen” by any record).
+It is even for a message to be updated while a scan is in progress so that
+two records processed consecutively will see different message bodies.</p>
+<p>However, it is not possible for a message to update while a single record is accessing.
+Such concurrent read/write operations to a single message buffer is prevented by a lock.</p>
+</div>
+<div class="section" id="message-transmission">
+<h2>Message Transmission<a class="headerlink" href="#message-transmission" title="Permalink to this headline">¶</a></h2>
+<p>The Driver maintains a list of message IDs which some code may transmit.
+Tx buffers are used as an intermediate “scratch” space to construct new messages.
+This allows a message to be constructed using several EPICS records.</p>
+<p>When ready, the scratch buffer message is queued to a shared send buffer (see DTYP=”PSC Ctrl Send”).
+The common buffer collects a number of complete messages.
+This may include several messages with the same message ID.</p>
+<p>No bytes will be sent until the contents of the shared send buffer are moved to the socket send buffer
+(see DTYP=”PSC Ctrl Send All”).</p>
+<img alt="_images/message-tx.png" src="_images/message-tx.png" />
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Message Processing</a><ul>
+<li><a class="reference internal" href="#message-reception">Message Reception</a></li>
+<li><a class="reference internal" href="#message-transmission">Message Transmission</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="building.html"
+                        title="previous chapter">Building from Source</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="devsup.html"
+                        title="next chapter">Device Supports</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/processing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="devsup.html" title="Device Supports"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="building.html" title="Building from Source"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pscdrv  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Michael Davidsaver.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,371 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Device Supports &#8212; pscdrv  documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="UDP “Fast” Receiver" href="udpfast.html" />
+    <link rel="prev" title="Message Processing" href="processing.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="udpfast.html" title="UDP “Fast” Receiver"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="processing.html" title="Message Processing"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pscdrv  documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="device-supports">
+<span id="devsup"></span><h1>Device Supports<a class="headerlink" href="#device-supports" title="Permalink to this headline">¶</a></h1>
+<p>A number of EPICS Device Supports are available which move data
+to/from message buffers, or provide driver internal information (eg. TCP connection status).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All Device Supports use the INST_IO Link format (prefixed with “&#64;”) for INP and OUT fields.</p>
+</div>
+<div class="section" id="internal">
+<h2>Internal<a class="headerlink" href="#internal" title="Permalink to this headline">¶</a></h2>
+<p>All Supports expect a link with only the name of a Device instance.
+Typically this will be a macro (eg. “&#64;$(DEVICE)”).</p>
+<div class="section" id="psc-ctrl-connected">
+<h3>PSC Ctrl Connected<a class="headerlink" href="#psc-ctrl-connected" title="Permalink to this headline">¶</a></h3>
+<p>A binary status indicating if the TCP connection is currently active.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">bi</span><span class="p">,</span> <span class="s2">&quot;$(P)Conn-Sts&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Ctrl Connected&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DESC</span><span class="p">,</span> <span class="s2">&quot;Connection status&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">ZNAM</span><span class="p">,</span> <span class="s2">&quot;Disconnected&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">ONAM</span><span class="p">,</span> <span class="s2">&quot;Connected&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">ZSV</span> <span class="p">,</span> <span class="s2">&quot;MAJOR&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When SCAN=”I/O Intr” this record will update immediately.
+A record with this support can be combined with a calcoutRecord with OOPT=”Transition to Non-zero”
+to process some records each time the connection is (re)esstablish.
+This might be used to (re)synchronize the device to match the IOC state when recovering from a power loss.</p>
+</div>
+<div class="section" id="psc-on-connect">
+<h3>PSC On Connect<a class="headerlink" href="#psc-on-connect" title="Permalink to this headline">¶</a></h3>
+<p>A binary “status” meant to SCAN=”I/O Intr” each time a device becomes connected.
+Intended to trigger scans to synchronize IOC and device after (re)connect.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">bi</span><span class="p">,</span> <span class="s2">&quot;$(P)onconn&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC On Connect&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FLNK</span><span class="p">,</span> <span class="s2">&quot;$(P)onconn:1&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="n">record</span><span class="p">(</span><span class="n">fanout</span><span class="p">,</span> <span class="s2">&quot;$(P)onconn:1&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">...</span> <span class="c1"># eg. write some registers</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">LNKF</span><span class="p">,</span> <span class="s2">&quot;$(P)Send&quot;</span><span class="p">)</span> <span class="c1"># flush</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="psc-ctrl-message">
+<h3>PSC Ctrl Message<a class="headerlink" href="#psc-ctrl-message" title="Permalink to this headline">¶</a></h3>
+<p>A stringin record which contains the last informational log messages from the Driver.
+The messages are sent at various times based on indicate internal state changes in the Driver
+(eg. connection timeout).:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">stringin</span><span class="p">,</span> <span class="s2">&quot;$(P)Msg-I&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Ctrl Message&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DESC</span><span class="p">,</span> <span class="s2">&quot;Last message&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="psc-conn-count">
+<h3>PSC Conn Count<a class="headerlink" href="#psc-conn-count" title="Permalink to this headline">¶</a></h3>
+<p>A longin record which increments each time a TCP connection is established.</p>
+</div>
+<div class="section" id="psc-unknown-msg-count">
+<h3>PSC Unknown Msg Count<a class="headerlink" href="#psc-unknown-msg-count" title="Permalink to this headline">¶</a></h3>
+<p>A longin record which increments each time a message is received with a message ID
+which is not associated with any Records and will be discarded.  This may be useful
+during development.</p>
+</div>
+<div class="section" id="psc-ctrl-send">
+<h3>PSC Ctrl Send<a class="headerlink" href="#psc-ctrl-send" title="Permalink to this headline">¶</a></h3>
+<p>A longout record which queues the buffer for a single message ID to be sent.
+See Driver Data Flow.
+The message ID to be queued is taken from the VAL field, which must be in the range [0,65535].
+This can either be set in the database file, or at runtime by modifiying the VAL field.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">longout</span><span class="p">,</span> <span class="s2">&quot;$(P)Send:42&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Ctrl Send&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">OUT</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">VAL</span> <span class="p">,</span> <span class="s2">&quot;42&quot;</span><span class="p">)</span> <span class="c1"># message ID</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FLNK</span><span class="p">,</span> <span class="s2">&quot;$(P)Send&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="psc-ctrl-send-all">
+<h3>PSC Ctrl Send All<a class="headerlink" href="#psc-ctrl-send-all" title="Permalink to this headline">¶</a></h3>
+<p>A bo record which flushes the queued send buffer to the socket send buffer.
+See Driver Data Flow.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">bo</span><span class="p">,</span> <span class="s2">&quot;$(P)Send&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Ctrl Send All&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">OUT</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">ZNAM</span><span class="p">,</span> <span class="s2">&quot;Send&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">ONAM</span><span class="p">,</span> <span class="s2">&quot;Send&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="register-block-access">
+<span id="devsupreg"></span><h2>Register Block Access<a class="headerlink" href="#register-block-access" title="Permalink to this headline">¶</a></h2>
+<p>Individual values may be read/written to messages using DTYP=”PSC Reg”.
+eg. longin reads 4 bytes as a signed 32-bit integer.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">longin</span><span class="p">,</span> <span class="s2">&quot;$(P)reg1-I&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Reg&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME) 11 4&quot;</span><span class="p">)</span> <span class="c1"># message id 11, offset 4 bytes</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">TSE</span> <span class="p">,</span> <span class="s2">&quot;-2&quot;</span><span class="p">)</span> <span class="c1"># record TIME &lt;- RX time</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When using an output record with DTYP=”PSC Reg”, keep in mind that record processing stores the value
+in an internal scratch buffer.
+This may be repeated for multiple offsets, in order to populate a message.
+Then the message needs to beto be queued with a DTYP=”PSC Ctrl Send” record, as described above.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">longout</span><span class="p">,</span> <span class="s2">&quot;$(P)reg1-SP&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Reg&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">OUT</span> <span class="p">,</span> <span class="s2">&quot;@test 42 4&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FLNK</span><span class="p">,</span> <span class="s2">&quot;$(P)Send:42&quot;</span><span class="p">)</span> <span class="c1"># auto-queue</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">autosaveFields_pass0</span><span class="p">,</span> <span class="s2">&quot;VAL&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="longin-longout">
+<h3>longin/longout<a class="headerlink" href="#longin-longout" title="Permalink to this headline">¶</a></h3>
+<p>Operates on a signed 32-bit integer</p>
+</div>
+<div class="section" id="mbbi-mbbo">
+<h3>mbbi/mbbo<a class="headerlink" href="#mbbi-mbbo" title="Permalink to this headline">¶</a></h3>
+<p>Operates on a signed 32-bit integer.
+Respects the NOBT (number of bits) and SHFT (shift) fields to operate on bit registers.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">mbbo</span><span class="p">,</span> <span class="s2">&quot;$(P)reg3:1-Sel&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Reg&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">OUT</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME) 1 12&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">NOBT</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SHFT</span><span class="p">,</span> <span class="s2">&quot;16&quot;</span><span class="p">)</span> <span class="c1"># select bits 16 and 17</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="bi-bo">
+<h3>bi/bo<a class="headerlink" href="#bi-bo" title="Permalink to this headline">¶</a></h3>
+<p>Operate on an unsigned 32-bit integer.
+Respects the MASK field.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">bo</span><span class="p">,</span> <span class="s2">&quot;$(P)reg3:0-Sel&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Reg&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">OUT</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME) 1 12&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">MASK</span><span class="p">,</span> <span class="s2">&quot;0x40000&quot;</span><span class="p">)</span> <span class="c1"># bit 18</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="ai-ao">
+<h3>ai/ao<a class="headerlink" href="#ai-ao" title="Permalink to this headline">¶</a></h3>
+<p>DTYP=”PSC Reg” operates on a signed 32-bit integer.
+Alternately, DTYP=”PSC Reg F32” or DTYP=”PSC Reg F64”
+may be used to operate on 32 or 64-bit IEEE floating point values.</p>
+</div>
+</div>
+<div class="section" id="waveform-block-access">
+<span id="devsupblock"></span><h2>Waveform Block Access<a class="headerlink" href="#waveform-block-access" title="Permalink to this headline">¶</a></h2>
+<p>Arrays my be encoded/decoded from PSC messages with a waveform record.
+Array element type is determined by the DTYP.
+In this example, signed 16-bit integers.
+The INP/OUT link contains the device instance name and message ID.
+Optionally, an offset and step (in bytes) may be given to operate on interleaved arrays.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="s2">&quot;$(P)wfin-I&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Block I16 In&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME) $(msgid) $(offset=0) $(step=0)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">SCAN</span><span class="p">,</span> <span class="s2">&quot;I/O Intr&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FTVL</span><span class="p">,</span> <span class="s2">&quot;DOUBLE&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">NELM</span><span class="p">,</span> <span class="s2">&quot;10&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Sending an array is accomplished by replacing “In” with “Out” in the DTYP.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="s2">&quot;$(P)wfout-SP&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Block I16 Out&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span> <span class="p">,</span> <span class="s2">&quot;@$(NAME) $(msgid)&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FTVL</span><span class="p">,</span> <span class="s2">&quot;DOUBLE&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">NELM</span><span class="p">,</span> <span class="s2">&quot;10&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FLNK</span><span class="p">,</span> <span class="s2">&quot;$(P)Send-Cmd&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="single-register-writes">
+<h2>Single Register Writes<a class="headerlink" href="#single-register-writes" title="Permalink to this headline">¶</a></h2>
+<p>These Supports send IOC to Device messages with an 8 byte body consisting of an address (4 bytes) and data (4 bytes).
+The data can be either a 32-bit integer (unsigned or 2s complement signed), or a 32-bit IEEE-754 single precision floating point number.
+All are in big endian byte order.</p>
+<p>The following is a complete example message, including 8 bytes of header and 8 bytes of body.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>      <span class="mi">0</span>     <span class="mi">1</span>     <span class="mi">2</span>     <span class="mi">3</span>
+   <span class="o">+-----+-----+-----------+</span>
+<span class="mi">0</span>  <span class="o">|</span>  <span class="n">P</span>  <span class="o">|</span>  <span class="n">S</span>  <span class="o">|</span>   <span class="n">Msg</span> <span class="n">ID</span>  <span class="o">|</span>
+   <span class="o">+-----+-----+-----+-----+</span>
+<span class="mi">4</span>  <span class="o">|</span>  <span class="mi">0</span>  <span class="o">|</span>  <span class="mi">0</span>  <span class="o">|</span>  <span class="mi">0</span>  <span class="o">|</span>  <span class="mi">8</span>  <span class="o">|</span>
+   <span class="o">+-----+-----+-----+-----+</span>
+<span class="mi">8</span>  <span class="o">|</span>         <span class="n">Address</span>       <span class="o">|</span>
+   <span class="o">+-----+-----+-----------+</span>
+<span class="n">C</span>  <span class="o">|</span>         <span class="n">Value</span>         <span class="o">|</span>
+   <span class="o">+-----------------------+</span>
+</pre></div>
+</div>
+<p>The additional of the optional ‘info(SYNC, “SAME”)’ tag enables the output (ao, bo, longout, mbbo, mbboDirect) record
+to also listen for a Device to IOC message with the same format.  When such a message is received, the record
+value will be updated without sending an IOC to Device message.
+This allows an IOC to be synced to a device, enabling multi-master scenarios.</p>
+<p>All Supports expect a link with only the name of a Device instance, block number, and register number
+(eg. “&#64;$(DEV) 10 20”).</p>
+<div class="section" id="psc-single-u32">
+<h3>PSC Single U32<a class="headerlink" href="#psc-single-u32" title="Permalink to this headline">¶</a></h3>
+<p>For bo, mbbo, and mbboDirect records, the value is interpreted as an unsigned 32-bit integer.</p>
+</div>
+<div class="section" id="psc-single-i32">
+<h3>PSC Single I32<a class="headerlink" href="#psc-single-i32" title="Permalink to this headline">¶</a></h3>
+<p>For ao and longout records, the value is interpreted as a 2’s complement signed 32-bit integer.</p>
+<p>The following example will queue a IOC to Device message the record’s value as a signed integer along
+with the address 128 in a message with ID #4.
+The presense of the optional “SYNC” info tag means that if a Device to IOC message with body size &gt;=8 and ID #4 is received,
+and the first 4 body bytes match 128, then this record will be updated using the second 4 body bytes.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">longout</span><span class="p">,</span> <span class="s2">&quot;$(P)Reg:0-SP&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">DTYP</span><span class="p">,</span> <span class="s2">&quot;PSC Single I32&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">OUT</span> <span class="p">,</span> <span class="s2">&quot;@$(DEV) 4 128&quot;</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">SYNC</span><span class="p">,</span> <span class="s2">&quot;SAME&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="psc-single-f32">
+<h3>PSC Single F32<a class="headerlink" href="#psc-single-f32" title="Permalink to this headline">¶</a></h3>
+<p>For ao records, the value is interpreted as a 32-bit IEEE-754 single precision floating point number.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Device Supports</a><ul>
+<li><a class="reference internal" href="#internal">Internal</a><ul>
+<li><a class="reference internal" href="#psc-ctrl-connected">PSC Ctrl Connected</a></li>
+<li><a class="reference internal" href="#psc-on-connect">PSC On Connect</a></li>
+<li><a class="reference internal" href="#psc-ctrl-message">PSC Ctrl Message</a></li>
+<li><a class="reference internal" href="#psc-conn-count">PSC Conn Count</a></li>
+<li><a class="reference internal" href="#psc-unknown-msg-count">PSC Unknown Msg Count</a></li>
+<li><a class="reference internal" href="#psc-ctrl-send">PSC Ctrl Send</a></li>
+<li><a class="reference internal" href="#psc-ctrl-send-all">PSC Ctrl Send All</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#register-block-access">Register Block Access</a><ul>
+<li><a class="reference internal" href="#longin-longout">longin/longout</a></li>
+<li><a class="reference internal" href="#mbbi-mbbo">mbbi/mbbo</a></li>
+<li><a class="reference internal" href="#bi-bo">bi/bo</a></li>
+<li><a class="reference internal" href="#ai-ao">ai/ao</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#waveform-block-access">Waveform Block Access</a></li>
+<li><a class="reference internal" href="#single-register-writes">Single Register Writes</a><ul>
+<li><a class="reference internal" href="#psc-single-u32">PSC Single U32</a></li>
+<li><a class="reference internal" href="#psc-single-i32">PSC Single I32</a></li>
+<li><a class="reference internal" href="#psc-single-f32">PSC Single F32</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="processing.html"
+                        title="previous chapter">Message Processing</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="udpfast.html"
+                        title="next chapter">UDP “Fast” Receiver</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/devsup.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="udpfast.html" title="UDP “Fast” Receiver"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="processing.html" title="Message Processing"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pscdrv  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Michael Davidsaver.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>
