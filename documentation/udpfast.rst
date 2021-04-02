@@ -160,12 +160,23 @@ The buffer depth is control by the largest ``NELM`` of an associated aaiRecord.
 "Short" buffer device support is meant to be a single chain (per device)
 beginning with a periodic scan, and ending with the "Clear" device support.  ::
 
+    record(aai, "$(P)tbase") {
+        field(DTYP, "PSCUDPFast Get Short")
+        field(INP , "@test 12345 -1") # message id 12345, difference in RX time from first packet
+        field(SCAN, "1 second")
+        field(FTVL, "ULONG")
+        field(EGU , "ns")
+        field(NELM, "16")
+        field(TSE , "-2") # TIME <- first packet RX time
+        field(FLNK, "$(P)val0")
+    }
+
     record(aai, "$(P)val0") {
         field(DTYP, "PSCUDPFast Get Short")
         field(INP , "@test 12345 0") # message id 12345, offset 0 bytes
-        field(SCAN, "1 second")
         field(FTVL, "ULONG")
         field(NELM, "16")
+        field(TSE , "-2")
         field(FLNK, "$(P)val1")
     }
 
@@ -175,6 +186,7 @@ beginning with a periodic scan, and ending with the "Clear" device support.  ::
         field(SCAN, "1 second")
         field(FTVL, "ULONG")
         field(NELM, "16")
+        field(TSE , "-2")
         field(FLNK, "$(P)clr")
     }
 

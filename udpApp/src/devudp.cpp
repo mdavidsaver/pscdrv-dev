@@ -213,7 +213,7 @@ long devudp_get_lastsize(int64inRecord* prec)
 struct privShortBuf {
     UDPFast *psc;
     unsigned int block;
-    unsigned long offset;
+    long offset;
 };
 
 long devudp_clear_shortbuf(longinRecord *prec)
@@ -249,7 +249,7 @@ long devudp_init_record_shortbuf(R* prec)
         std::istringstream strm(link);
         std::string name;
         unsigned int block;
-        unsigned long offset = 0;
+        long offset = 0;
 
         strm >> name >> block;
         if(!strm.eof())
@@ -296,25 +296,42 @@ long devudp_read_shortbuf(aaiRecord* prec)
 
         size_t N = std::min(size_t(prec->nelm), priv->psc->shortBuf.size());
         epicsUInt32* arr = static_cast<epicsUInt32*>(prec->bptr);
+        epicsUInt64 reftime; // ns
 
+        bool first = true;
         for(size_t i=0; i<N; i++) {
             const UDPFast::pkt& pkt = priv->psc->shortBuf[i];
             if(pkt.msgid != priv->block)
                 continue;
 
-            if(i==0u && prec->tse==epicsTimeEventDeviceTime)
-                prec->time = pkt.rxtime;
+            if(first) {
+                if(prec->tse==epicsTimeEventDeviceTime)
+                    prec->time = pkt.rxtime;
 
-            epicsUInt32 rval = 0u;
+                reftime = pkt.rxtime.secPastEpoch;
+                reftime *= 1000000000u;
+                reftime += pkt.rxtime.nsec;
 
-            if(priv->offset + 4u > pkt.body.size()) {
+                first = false;
+            }
+
+            if(priv->offset < 0u) {
+                // magic offset to access time
+                epicsUInt64 curtime = pkt.rxtime.secPastEpoch;
+                curtime *= 1000000000u;
+                curtime += pkt.rxtime.nsec;
+
+                arr[i] = curtime - reftime;
+
+            } else if(priv->offset < 0u || size_t(priv->offset) + 4u > pkt.body.size()) {
                 (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
 
             } else {
+                epicsUInt32 rval = 0u;
                 memcpy(&rval, &pkt.body[priv->offset], 4u);
+                arr[i] = ntohl(rval);
             }
 
-            arr[i] = ntohl(rval);
         }
 
         prec->nord = epicsUInt32(N);
