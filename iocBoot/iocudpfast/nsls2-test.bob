@@ -74,35 +74,30 @@
     <pv_name>$(P)RXBRate-I</pv_name>
     <x>130</x>
     <y>350</y>
-    <width>130</width>
   </widget>
   <widget type="textupdate" version="2.0.0">
     <name>Text Update_3</name>
     <pv_name>$(P)RXRate-I</pv_name>
     <x>130</x>
     <y>370</y>
-    <width>130</width>
   </widget>
   <widget type="textupdate" version="2.0.0">
     <name>Text Update_4</name>
     <pv_name>$(P)WrtRate-I</pv_name>
     <x>130</x>
     <y>390</y>
-    <width>130</width>
   </widget>
   <widget type="textupdate" version="2.0.0">
     <name>Text Update_5</name>
     <pv_name>$(P)DrpRate-I</pv_name>
     <x>130</x>
     <y>430</y>
-    <width>130</width>
   </widget>
   <widget type="textupdate" version="2.0.0">
     <name>Text Update_6</name>
     <pv_name>$(P)LstSz-I</pv_name>
     <x>130</x>
     <y>410</y>
-    <width>130</width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>Label</name>
@@ -123,7 +118,7 @@
     <text>% Write</text>
     <x>140</x>
     <y>320</y>
-    <width>60</width>
+    <width>30</width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>Label_3</name>
@@ -193,7 +188,6 @@
     <pv_name>$(P)IgnRate-I</pv_name>
     <x>130</x>
     <y>450</y>
-    <width>130</width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>Label_9</name>
@@ -208,7 +202,6 @@
     <pv_name>$(P)TmoRate-I</pv_name>
     <x>130</x>
     <y>470</y>
-    <width>130</width>
   </widget>
   <widget type="label" version="2.0.0">
     <name>Label_10</name>
@@ -217,5 +210,26 @@
     <y>470</y>
     <width>110</width>
     <horizontal_alignment>2</horizontal_alignment>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_10</name>
+    <pv_name>$(P)NDrp-I</pv_name>
+    <x>230</x>
+    <y>430</y>
+    <width>80</width>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_11</name>
+    <pv_name>$(P)NIgn-I</pv_name>
+    <x>230</x>
+    <y>450</y>
+    <width>80</width>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_12</name>
+    <pv_name>$(P)NTmo-I</pv_name>
+    <x>230</x>
+    <y>470</y>
+    <width>80</width>
   </widget>
 </display>
