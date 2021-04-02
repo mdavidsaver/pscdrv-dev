@@ -48,17 +48,6 @@ The "fast" receiver is included in a separate DBD and library.  ::
 
 See also :ref:`includinginioc`.
 
-Troubleshooting
-"""""""""""""""
-
-The diagnostic rates/counters in ``pscudpfast.db`` should be consulted first.
-Either the packet RX rate (``$(P)RXRate-I``) or the timeout rate (``$(P)TmoRate-I``) should be non-zero.
-
-The ``PSCDebug`` global log level may be changed.
-The default (0) will only print errors.
-This can be raised up to 5 to print additional warnings and status.
-Note that levels 3 and above are quite verbose.
-
 Admin setup
 -----------
 
@@ -194,3 +183,37 @@ beginning with a periodic scan, and ending with the "Clear" device support.  ::
         field(INP , "@test")
     }
 
+
+
+Troubleshooting
+---------------
+
+The diagnostic rates/counters in ``pscudpfast.db`` should be consulted first.
+Either the packet RX rate (``$(P)RXRate-I``) or the timeout rate (``$(P)TmoRate-I``) should be non-zero.
+
+The ``PSCDebug`` global log level may be changed.
+The default (0) will only print errors.
+This can be raised up to 5 to print additional warnings and status.
+Note that levels 3 and above are quite verbose.
+
+Packet Loss
+"""""""""""
+
+Places where packet loss is known to be possible after packets leave the originating device,
+and before being written to disk.
+
+- Ethernet switch
+- NIC -> OS input FIFO
+- OS socket buffer
+
+Drops by a switch aren't detected automatically.
+
+Drops at the OS input are reported with other network interface statistics. ::
+
+    $ /sbin/ifconfig eno6
+    eno6: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+    ...
+            RX packets 78734975761  bytes 75113071891586 (68.3 TiB)
+            RX errors 0  dropped 855783  overruns 0  frame 0
+
+Drops at the socket buffer are reported by the driver via ``$(P)DrpRate-I``.
