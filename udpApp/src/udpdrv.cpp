@@ -245,6 +245,10 @@ void UDPFast::rxfn() {
                 errlogPrintf("%s : vpool stall\n", name.c_str());
 
             UnGuard U(G);
+
+            // ensure wakeup of cache worker to (hopefully) replenish vpool
+            pendingReady.signal();
+
             vpoolStall.wait();
             continue;
         }
