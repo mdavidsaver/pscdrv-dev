@@ -56,11 +56,74 @@ record(lsi, "$(P)LastErr-I") {
     field(DTYP, "PSCUDPFast last error")
     field(INP , "@$(NAME)")
     field(SIZV, "512")
+    field(FLNK, "$(P)SItvl-I_")
+}
+
+record(ai, "$(P)SItvl-I_") {
+    field(DTYP, "PSCUDPFast interval")
+    field(INP , "@")
+    field(EGU , "s")
+    field(FLNK, "$(P)DrpRate-I")
+}
+
+record(calc, "$(P)DrpRate-I") {
+    field(INPA, "$(P)NDrp-I PP MSI")
+    field(INPD, "1")
+    field(INPE, "$(P)SItvl-I_ NPP")
+    field(CALC, "C:=A-B;B:=A;C/D/E")
+    field(EGU , "Hz")
+    field(HIGH, "0.1")
+    field(HSV , "MAJOR")
+    field(TSEL, "$(P)SItvl-I_.TIME")
+    field(FLNK, "$(P)IgnRate-I")
+}
+
+record(int64in, "$(P)NDrp-I") {
+    field(DESC, "packets ignored")
+    field(DTYP, "PSCUDPFast #drop")
+    field(INP , "@$(NAME)")
+    field(TSEL, "$(P)SItvl-I_.TIME")
+}
+
+record(calc, "$(P)IgnRate-I") {
+    field(INPA, "$(P)NIgn-I PP MSI")
+    field(INPD, "1")
+    field(INPE, "$(P)SItvl-I_ NPP")
+    field(CALC, "C:=A-B;B:=A;C/D/E")
+    field(EGU , "Hz")
+    field(HIGH, "0.1")
+    field(HSV , "MAJOR")
+    field(TSEL, "$(P)SItvl-I_.TIME")
+    field(FLNK, "$(P)TmoRate-I")
+}
+
+record(int64in, "$(P)NIgn-I") {
+    field(DESC, "packets dropped")
+    field(DTYP, "PSCUDPFast #ignore")
+    field(INP , "@$(NAME)")
+    field(TSEL, "$(P)SItvl-I_.TIME")
+}
+
+record(calc, "$(P)TmoRate-I") {
+    field(INPA, "$(P)NTmo-I PP MSI")
+    field(INPD, "1")
+    field(INPE, "$(P)SItvl-I_ NPP")
+    field(CALC, "C:=A-B;B:=A;C/D/E")
+    field(EGU , "Hz")
+    field(HIGH, "0.1")
+    field(HSV , "MAJOR")
+    field(TSEL, "$(P)SItvl-I_.TIME")
+}
+
+record(int64in, "$(P)NTmo-I") {
+    field(DESC, "# of timeouts")
+    field(DTYP, "PSCUDPFast #timeout")
+    field(INP , "@$(NAME)")
 }
 
 # fast status chain
 
-record(ai, "$(P)Itvl-I_") {
+record(ai, "$(P)FItvl-I_") {
     field(DTYP, "PSCUDPFast interval")
     field(INP , "@")
     field(SCAN, ".1 second")
@@ -76,7 +139,7 @@ record(ai, "$(P)PFree-I") {
     field(EGU , "%")
     field(HOPR, "100")
     field(MDEL, "1")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
     field(FLNK, "$(P)PRXe-I")
 }
 
@@ -88,7 +151,7 @@ record(ai, "$(P)PRXe-I") {
     field(EGU , "%")
     field(HOPR, "100")
     field(MDEL, "1")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
     field(FLNK, "$(P)PWrt-I")
 }
 
@@ -100,19 +163,19 @@ record(ai, "$(P)PWrt-I") {
     field(EGU , "%")
     field(HOPR, "100")
     field(MDEL, "1")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
     field(FLNK, "$(P)RXBRate-I")
 }
 
 record(calc, "$(P)RXBRate-I") {
     field(INPA, "$(P)NBRX-I PP MSI")
     field(INPD, "0x100000") # scale B/s -> MB/s
-    field(INPE, "$(P)Itvl-I_ NPP")
+    field(INPE, "$(P)FItvl-I_ NPP")
     field(CALC, "C:=A-B;B:=A;C/D/E")
     field(EGU , "MB/s")
     field(PREC, "3")
     field(MDEL, "2")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
     field(FLNK, "$(P)RXRate-I")
 }
 
@@ -121,18 +184,18 @@ record(int64in, "$(P)NBRX-I") {
     field(DTYP, "PSCUDPFast bytes rx")
     field(INP , "@$(NAME)")
     field(EGU , "B")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
 }
 
 record(calc, "$(P)RXRate-I") {
     field(INPA, "$(P)NRX-I PP MSI")
     field(INPD, "1000")
-    field(INPE, "$(P)Itvl-I_ NPP")
+    field(INPE, "$(P)FItvl-I_ NPP")
     field(CALC, "C:=A-B;B:=A;C/D/E")
     field(EGU , "kHz")
     field(PREC, "3")
     field(MDEL, "1")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
     field(FLNK, "$(P)WrtRate-I")
 }
 
@@ -141,18 +204,18 @@ record(int64in, "$(P)NRX-I") {
     field(DTYP, "PSCUDPFast #rx")
     field(INP , "@$(NAME)")
     field(EGU , "B")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
 }
 
 record(calc, "$(P)WrtRate-I") {
     field(INPA, "$(P)NWrt-I PP MSI")
     field(INPD, "0x100000") # scale B/s -> MB/s
-    field(INPE, "$(P)Itvl-I_ NPP")
+    field(INPE, "$(P)FItvl-I_ NPP")
     field(CALC, "C:=A-B;B:=A;C/D/E")
     field(EGU , "MB/s")
     field(MDEL, "2")
-    field(TSEL, "$(P)Itvl-I_.TIME")
-    field(FLNK, "$(P)DrpRate-I")
+    field(TSEL, "$(P)FItvl-I_.TIME")
+    field(FLNK, "$(P)NooM-I")
 }
 
 record(int64in, "$(P)NWrt-I") {
@@ -160,70 +223,14 @@ record(int64in, "$(P)NWrt-I") {
     field(DTYP, "PSCUDPFast bytes wrote")
     field(INP , "@$(NAME)")
     field(EGU , "B")
-    field(TSEL, "$(P)Itvl-I_.TIME")
-}
-
-record(calc, "$(P)DrpRate-I") {
-    field(INPA, "$(P)NDrp-I PP MSI")
-    field(INPD, "1")
-    field(INPE, "$(P)Itvl-I_ NPP")
-    field(CALC, "C:=A-B;B:=A;C/D/E")
-    field(EGU , "Hz")
-    field(HIGH, "0.1")
-    field(HSV , "MAJOR")
-    field(TSEL, "$(P)Itvl-I_.TIME")
-    field(FLNK, "$(P)IgnRate-I")
-}
-
-record(int64in, "$(P)NDrp-I") {
-    field(DESC, "packets ignored")
-    field(DTYP, "PSCUDPFast #drop")
-    field(INP , "@$(NAME)")
-    field(TSEL, "$(P)Itvl-I_.TIME")
-}
-
-record(calc, "$(P)IgnRate-I") {
-    field(INPA, "$(P)NIgn-I PP MSI")
-    field(INPD, "1")
-    field(INPE, "$(P)Itvl-I_ NPP")
-    field(CALC, "C:=A-B;B:=A;C/D/E")
-    field(EGU , "Hz")
-    field(HIGH, "0.1")
-    field(HSV , "MAJOR")
-    field(TSEL, "$(P)Itvl-I_.TIME")
-    field(FLNK, "$(P)TmoRate-I")
-}
-
-record(int64in, "$(P)NIgn-I") {
-    field(DESC, "packets dropped")
-    field(DTYP, "PSCUDPFast #ignore")
-    field(INP , "@$(NAME)")
-    field(TSEL, "$(P)Itvl-I_.TIME")
-}
-
-record(calc, "$(P)TmoRate-I") {
-    field(INPA, "$(P)NTmo-I PP MSI")
-    field(INPD, "1")
-    field(INPE, "$(P)Itvl-I_ NPP")
-    field(CALC, "C:=A-B;B:=A;C/D/E")
-    field(EGU , "Hz")
-    field(HIGH, "0.1")
-    field(HSV , "MAJOR")
-    field(TSEL, "$(P)Itvl-I_.TIME")
-    field(FLNK, "$(P)NooM-I")
-}
-
-record(int64in, "$(P)NTmo-I") {
-    field(DESC, "# of timeouts")
-    field(DTYP, "PSCUDPFast #timeout")
-    field(INP , "@$(NAME)")
+    field(TSEL, "$(P)FItvl-I_.TIME")
 }
 
 record(int64in, "$(P)NooM-I") {
     field(DESC, "RX Out of memory events")
     field(DTYP, "PSCUDPFast #out of memory")
     field(INP , "@$(NAME)")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
     field(FLNK, "$(P)LstSz-I")
 }
 
@@ -232,6 +239,6 @@ record(int64in, "$(P)LstSz-I") {
     field(DTYP, "PSCUDPFast last file size")
     field(INP , "@$(NAME)")
     field(EGU , "MB")
-    field(TSEL, "$(P)Itvl-I_.TIME")
+    field(TSEL, "$(P)FItvl-I_.TIME")
     field(FLNK, "$(FLNK=)")
 }
