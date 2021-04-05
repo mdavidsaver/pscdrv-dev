@@ -224,14 +224,19 @@ long devudp_clear_shortbuf(longinRecord *prec)
             Guard S(dev->shortLock);
             temp.swap(dev->shortBuf);
         }
+        bool unstall;
         {
             Guard G(dev->rxLock);
+            unstall = dev->vpool.empty();
             for(size_t i=0u, N=temp.size(); i<N; i++) {
                 dev->vpool.push_back(UDPFast::vecs_t::value_type());
                 dev->vpool.back().swap(temp[i].body);
                 assert(!dev->vpool.back().empty());
             }
+            unstall &= !dev->vpool.empty();
         }
+        if(unstall)
+            dev->vpoolStall.signal();
         prec->val += (epicsInt32)temp.size();
         return 0;
 
