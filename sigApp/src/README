@@ -1,0 +1,9 @@
+This module estimates Power Spectrum Density using Welch's method.
+
+https://en.wikipedia.org/wiki/Welch%27s_method
+
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html#scipy.signal.welch
+
+Implemented using the FFTW library.
+
+http://www.fftw.org/
