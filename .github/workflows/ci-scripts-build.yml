@@ -19,32 +19,49 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             extra: ""
             configuration: static
             base: "7.0"
 
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             extra: "CMD_CXXFLAGS=-std=c++11 -Wall -Werror"
             configuration: default
             base: "7.0"
 
-          - os: ubuntu-20.04
+          - os: macos-latest
+            configuration: default
+            base: "7.0"
+
+          - os: ubuntu-latest
             extra: ""
             configuration: default
             base: "3.15"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
-    - name: Install system dependencies
+
+    - name: Apt
+      if: runner.os == 'Linux'
       run: sudo apt-get -y install libevent-dev
+
+    - name: Brew
+      if: runner.os == 'macOS'
+      run: |
+        brew install libevent
+        brew info libevent
+
     - name: Prepare and compile dependencies
       run: python .ci/cue.py prepare
+
     - name: Build main module
       run: python .ci/cue.py build
+
     - name: Run main module tests
       run: python .ci/cue.py test
+
     - name: Collect and show test results
+      if: always()
       run: python .ci/cue.py test-results
