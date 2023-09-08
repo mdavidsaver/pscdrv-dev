@@ -8,8 +8,19 @@
 #ifndef EVBASE_H
 #define EVBASE_H
 
+#if __cplusplus>=201103L || (defined(_MSC_VER) && (_MSC_VER>=1600)) || defined(_LIBCPP_VERSION)
+#  include <memory>
+using ::std::shared_ptr;
+using ::std::weak_ptr;
+using ::std::enable_shared_from_this;
+#else
+#  include <tr1/memory>
+using ::std::tr1::shared_ptr;
+using ::std::tr1::weak_ptr;
+using ::std::tr1::enable_shared_from_this;
+#endif
+
 #include <vector>
-#include <tr1/memory>
 
 #include <epicsThread.h>
 #include <epicsMutex.h>
@@ -25,7 +36,7 @@ struct event;
 
 class epicsShareClass EventBase
         :private epicsThreadRunable
-        ,public std::tr1::enable_shared_from_this<EventBase>
+        ,public enable_shared_from_this<EventBase>
 {
     event_base *base;
     event *keepalive;
@@ -45,12 +56,12 @@ public:
 public:
     virtual ~EventBase();
 
-    typedef std::tr1::shared_ptr<EventBase> pointer;
+    typedef shared_ptr<EventBase> pointer;
     event_base *get();
 
     static pointer makeBase();
 private:
-    static std::tr1::weak_ptr<EventBase> last_base;
+    static weak_ptr<EventBase> last_base;
 };
 
 

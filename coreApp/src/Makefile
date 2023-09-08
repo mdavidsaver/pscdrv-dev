@@ -24,8 +24,11 @@ pscCore_SRCS += devPSCReg.cpp
 pscCore_SRCS += devPSCSingle.cpp
 pscCore_SRCS += devPSCCtrl.cpp
 
+pscCore_LIBS += $(EPICS_BASE_IOC_LIBS)
+
 pscCore_SYS_LIBS += event_core event_extra
-pscCore_SYS_LIBS_Linux += event_pthreads
+pscCore_SYS_LIBS_DEFAULT = event_pthreads
+pscCore_SYS_LIBS_WIN32 =
 
 ifdef BASE_7_0
 PSCDBD = ../pscCore-new.dbd

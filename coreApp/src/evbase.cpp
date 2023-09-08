@@ -20,7 +20,7 @@
 #define epicsExportSharedSymbols
 #include "psc/evbase.h"
 
-std::tr1::weak_ptr<EventBase> EventBase::last_base;
+weak_ptr<EventBase> EventBase::last_base;
 
 EventBase::EventBase()
     :base(NULL)

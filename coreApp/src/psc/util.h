@@ -40,6 +40,13 @@
 #endif
 
 #ifdef __cplusplus
+
+#if __cplusplus<201103L
+#  define override
+#  define final
+#  define noexcept throw()
+#endif
+
 extern "C" {
 #endif
 

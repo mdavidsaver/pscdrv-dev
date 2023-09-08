@@ -118,8 +118,7 @@ template<typename T>
 void read_to_field(dbCommon *prec, Priv *priv, T* pfield)
 {
     if(!priv->psc->isConnected()) {
-        int junk = recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-        junk += 1;
+        (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
     }
 
     if(priv->offset > priv->block->data.size()
@@ -213,8 +212,7 @@ template<typename T>
 void write_from_field(dbCommon *prec, Priv *priv, const T* pfield)
 {
     if(!priv->psc->isConnected()) {
-        int junk = recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
-        junk += 1;
+        (void)recGblSetSevr(prec, WRITE_ALARM, INVALID_ALARM);
     }
 
     T temp = hton(*pfield);

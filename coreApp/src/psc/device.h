@@ -31,6 +31,7 @@
 #include <event2/buffer.h>
 
 #include "cblist.h"
+#include "util.h"
 
 #if __cplusplus<201103L
 #  ifndef override
@@ -59,7 +60,7 @@ public:
     short status, severity;
     recAlarm();
     recAlarm(short sts, short sevr);
-    virtual const char *what();
+    virtual const char *what() const noexcept override final;
 };
 
 typedef epicsGuard<epicsMutex> Guard;
@@ -79,7 +80,7 @@ public:
     }
 };
 
-class dbCommon;
+struct dbCommon;
 class PSCBase;
 
 struct PSC_API Block

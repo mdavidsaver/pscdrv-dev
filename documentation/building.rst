@@ -62,7 +62,8 @@ Then add the pscdrv (and optionally pscSig) libraries as a dependencies to your 
     myioc_LIBS += $(EPICS_BASE_IOC_LIBS)
 
     myioc_SYS_LIBS += event_core event_extra
-    myioc_SYS_LIBS_Linux += event_pthreads
+    myioc_SYS_LIBS_DEFAULT = event_pthreads
+    myioc_SYS_LIBS_WIN32 =
 
 Connecting to a device
 ----------------------

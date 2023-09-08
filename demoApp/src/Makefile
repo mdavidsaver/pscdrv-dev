@@ -45,7 +45,8 @@ pscdemo_SRCS_vxWorks += -nil-
 pscdemo_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 pscdemo_SYS_LIBS += event_core event_extra
-pscdemo_SYS_LIBS_Linux += event_pthreads
+pscdemo_SYS_LIBS_DEFAULT = event_pthreads
+pscdemo_SYS_LIBS_WIN32 =
 
 #===========================
 

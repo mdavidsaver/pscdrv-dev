@@ -28,7 +28,7 @@ recAlarm::recAlarm(short sts, short sevr)
     ,severity(sevr)
 {}
 
-const char* recAlarm::what()
+const char* recAlarm::what() const noexcept
 {
     return "Record alarm";
 }
@@ -88,7 +88,7 @@ long init_count(longinRecord* prec)
     return 0;
 }
 
-long get_iointr_info(int cmd, dbCommon *prec, IOSCANPVT *io)
+long get_iointr_info(int, dbCommon *prec, IOSCANPVT *io)
 {
     if(!prec->dpvt)
         return -1;

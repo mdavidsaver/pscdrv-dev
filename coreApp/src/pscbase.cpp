@@ -142,7 +142,11 @@ void PSCBase::startAll()
 void PSCBase::stopAll()
 {
     pscmap_t trash;
+#if __cplusplus>=201103L
+    trash = std::move(pscmap);
+#else
     pscmap.swap(trash);
+#endif
     while(!trash.empty()) {
         PSCBase* psc = trash.begin()->second;
         trash.erase(trash.begin());

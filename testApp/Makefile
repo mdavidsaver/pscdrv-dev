@@ -17,7 +17,8 @@ TESTS += testValues
 PROD_LIBS += pscCore
 PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
 PROD_SYS_LIBS += event_core event_extra
-PROD_SYS_LIBS_Linux += event_pthreads
+PROD_SYS_LIBS_DEFAULT = event_pthreads
+PROD_SYS_LIBS_WIN32 =
 TESTSCRIPTS_HOST += $(TESTS:%=%.t)
 
 #===========================

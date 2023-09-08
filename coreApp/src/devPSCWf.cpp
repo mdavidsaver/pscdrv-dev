@@ -77,8 +77,7 @@ long read_wf_real(waveformRecord* prec)
         Guard g(priv->psc->lock);
 
         if(!priv->psc->isConnected()) {
-            int junk = recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-            junk += 1;
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
             return 0;
         }
 
@@ -115,8 +114,7 @@ long read_wf_bytes(waveformRecord* prec)
         Guard g(priv->psc->lock);
 
         if(!priv->psc->isConnected()) {
-            int junk = recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
-            junk += 1;
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
             return 0;
         }
 

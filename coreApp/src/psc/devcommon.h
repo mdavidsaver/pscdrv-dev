@@ -34,12 +34,10 @@
 
 #define CATCH(NAME, REC) \
     catch(recAlarm& e) {\
-     int junk = recGblSetSevr(REC, e.status, e.severity);\
-     junk+=0;\
+     (void)recGblSetSevr(REC, e.status, e.severity);\
      return S_dev_badRequest;\
     }catch(std::exception& e) {\
-     int junk = recGblSetSevr(REC, COMM_ALARM, INVALID_ALARM);\
-     junk+=0;\
+     (void)recGblSetSevr(REC, COMM_ALARM, INVALID_ALARM);\
      timefprintf(stderr, "%s: " #NAME " error: %s\n", (REC)->name, e.what());\
      return S_dev_badRequest;\
     }
