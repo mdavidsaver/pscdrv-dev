@@ -12,9 +12,17 @@ DBD += pscUDPFast.dbd
 
 LIBRARY += pscUDPFast
 
+BUILD_FAST_UDP = YES
+ifndef BASE_7_0
+BUILD_FAST_UDP = NO
+endif
+ifneq (Linux,$(OS_CLASS))
+BUILD_FAST_UDP = NO
+endif
+
 # library uses features recvmmsg() not found in winsock, RTEMS <5, or (likely) vxWorks
 # not likely to find a 10G NIC with RTEMS/vxWorks anyway.
-ifdef BASE_7_0
+ifeq (YES,$(BUILD_FAST_UDP))
 pscUDPFast_SRCS += udpdrv.cpp
 pscUDPFast_SRCS += devudp.cpp
 pscUDPFast_dbd = ../pscUDPFast-7.dbd
