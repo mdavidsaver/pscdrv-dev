@@ -34,6 +34,36 @@
 #  error Uses Linux / *BSD specific socket features
 #endif
 
+#ifndef MSG_WAITFORONE
+/*
+ * No recvmmsg().
+ * Do the best we can.
+ */
+extern "C" {
+#include <sys/socket.h>
+#define MSG_WAITFORONE 0x40000000
+#define SO_PRIORITY 0
+#define SO_RXQ_OVFL 0
+struct mmsghdr {
+   struct msghdr msg_hdr;  /* Message header */
+   unsigned int  msg_len;  /* Number of received bytes for header */
+};
+int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen,
+                    int flags, struct timespec *timeout)
+{
+    ssize_t l;
+    flags &= ~MSG_WAITFORONE;
+    l = recvmsg(sockfd, &msgvec->msg_hdr, flags);
+    if (l < 0) {
+        return -1;
+    }
+    msgvec->msg_len = l;
+    return 1;
+}
+int fdatasync(int fd) { return fsync(fd); }
+}
+#endif
+
 namespace {
 
 // max size to allocate for a single buffer (Bytes)

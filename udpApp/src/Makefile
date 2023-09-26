@@ -17,7 +17,9 @@ ifndef BASE_7_0
 BUILD_FAST_UDP = NO
 endif
 ifneq (Linux,$(OS_CLASS))
+ifneq (Darwin,$(OS_CLASS))
 BUILD_FAST_UDP = NO
+endif
 endif
 
 # library uses features recvmmsg() not found in winsock, RTEMS <5, or (likely) vxWorks
