@@ -46,7 +46,7 @@ PSCUDP::PSCUDP(const std::string &name,
 
         {
             char pbuf[INET_ADDRSTRLEN];
-            sprintf(pbuf, "%u", hostport);
+            snprintf(pbuf, sizeof pbuf, "%u", hostport);
 
             evutil_addrinfo hints;
             memset(&hints, 0, sizeof(hints));
