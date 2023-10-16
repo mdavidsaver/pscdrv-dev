@@ -1,0 +1,43 @@
+record(bo, "$(P)send") {
+    field(DTYP, "PSC Ctrl Send All")
+    field(OUT , "@$(CTRL)")
+    field(ZNAM, "Send")
+    field(ONAM, "Send")
+}
+
+
+record(stringout, "$(P)hello") {
+    field(DTYP, "PSC Block")
+#    field(SCAN, "1 second")
+    field(OUT , "@$(CTRL) 1")
+    field(VAL , "Hello!")
+    field(FLNK, "$(P)send")
+}
+record(stringin, "$(P)world") {
+    field(DTYP, "PSC Block")
+    field(SCAN, "I/O Intr")
+    field(INP , "@$(CTRL) 32769")
+    field(TSE , "-2")
+}
+
+record(mbboDirect, "$(P)CMask-SP") {
+    field(DTYP, "PSC Reg")
+    field(OUT , "@$(CTRL) 16 8")
+    field(RVAL, "1")
+    field(PINI, "YES")
+    field(FLNK, "$(P)DPRT-SP_")
+}
+record(longout, "$(P)DPRT-SP") {
+    field(DTYP, "PSC Reg")
+    field(OUT , "@$(CTRL) 16 4")
+    field(VAL , "$(STRM_PORT)")
+    field(PINI, "YES")
+    field(FLNK, "$(P)DPRT-SP_")
+}
+record(longout, "$(P)DPRT-SP_") {
+    field(DTYP, "PSC Ctrl Send")
+    field(SCAN, "1 second") # heartbeat and send msg 10 w/ data port
+    field(OUT , "@$(CTRL)")
+    field(VAL, "16")
+    field(FLNK, "$(P)send")
+}
