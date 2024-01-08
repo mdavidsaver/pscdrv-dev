@@ -1,0 +1,37 @@
+
+record(stringout, "tx:say") {
+    field(DTYP, "PSC Block")
+    field(OUT, "@sender 100")
+    field(FLNK, "tx:Send-Cmd")
+}
+record(stringin, "rx:hear") {
+    field(DTYP, "PSC Block")
+    field(INP, "@receiver 100")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "tx:200") {
+    field(FTVL, "DOUBLE")
+    field(NELM, "16")
+    field(DTYP, "PSC Block I32 Out")
+    field(INP, "@sender 200")
+    field(FLNK, "tx:Send-Cmd")
+    field(TPRO, "1")
+}
+record(waveform, "rx:200:a") {
+    field(FTVL, "DOUBLE")
+    field(NELM, "16")
+    field(DTYP, "PSC Block I32 In")
+    field(INP, "@receiver 200 0 7")
+    field(SCAN, "I/O Intr")
+    field(FLNK, "rx:200:b")
+    field(TPRO, "1")
+}
+record(waveform, "rx:200:b") {
+    field(FTVL, "DOUBLE")
+    field(NELM, "16")
+    field(DTYP, "PSC Block I24 In")
+    field(INP, "@receiver 200 4 7")
+    field(FLNK, "rx:200:c")
+    field(TPRO, "1")
+}

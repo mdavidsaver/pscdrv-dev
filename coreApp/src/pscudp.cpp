@@ -75,14 +75,19 @@ PSCUDP::PSCUDP(const std::string &name,
         }
 
         {
-            sockaddr_in addr;
-            memset(&addr, 0, sizeof(addr));
-            addr.sin_family = AF_INET;
-            addr.sin_addr.s_addr = htonl(INADDR_ANY);
-            addr.sin_port = htons(ifaceport);
+            memset(&bind_addr, 0, sizeof(bind_addr));
+            bind_addr.sin_family = AF_INET;
+            bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+            bind_addr.sin_port = htons(ifaceport);
 
-            if(::bind(socket, (sockaddr*)&addr, sizeof(addr))==-1) {
+            if(::bind(socket, (sockaddr*)&bind_addr, sizeof(bind_addr))==-1) {
                 std::string msg("bind() failed: ");
+                msg += evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR());
+                throw std::runtime_error(msg);
+            }
+            ev_socklen_t slen = sizeof(bind_addr);
+            if(::getsockname(socket, (sockaddr*)&bind_addr, &slen)==-1) {
+                std::string msg("getsockname() failed: ");
                 msg += evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR());
                 throw std::runtime_error(msg);
             }
@@ -96,6 +101,10 @@ PSCUDP::PSCUDP(const std::string &name,
 PSCUDP::~PSCUDP() {
     event_free(evt_rx);
     event_free(evt_tx);
+}
+
+unsigned short PSCUDP::bound_port() const {
+    return ntohs(bind_addr.sin_port);
 }
 
 void PSCUDP::connect()

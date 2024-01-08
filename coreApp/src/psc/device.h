@@ -197,7 +197,7 @@ public:
     bool ReportOne(int lvl, PSCBase* psc);
 };
 
-class PSCEventBase : public PSCBase
+class PSC_API PSCEventBase : public PSCBase
 {
 
 protected:
@@ -216,7 +216,7 @@ public:
     virtual void stopinloop() =0;
 };
 
-class PSC : public PSCEventBase
+class PSC_API PSC : public PSCEventBase
 {
 
     event *reconnect_timer;
@@ -272,7 +272,7 @@ private:
     static void bev_reconnect(int,short,void*);
 };
 
-class PSCUDP : public PSCEventBase
+class PSC_API PSCUDP : public PSCEventBase
 {
 public:
     PSCUDP(const std::string& name,
@@ -281,6 +281,8 @@ public:
            unsigned short ifaceport,
            unsigned int timeoutmask);
     virtual ~PSCUDP();
+
+    unsigned short bound_port() const;
 
     virtual void queueSend(epicsUInt16, const void*, epicsUInt32) override final;
     virtual void queueSend(Block*, const dbuffer&) override final;
@@ -295,6 +297,7 @@ private:
     sockaddr_in ep;
 
     int socket;
+    sockaddr_in bind_addr;
     event *evt_rx, *evt_tx;
 
     typedef std::vector<char> buffer_t;

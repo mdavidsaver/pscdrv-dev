@@ -13,6 +13,19 @@ TESTPROD_HOST += testValues
 testValues_SRCS += testValues.cpp
 TESTS += testValues
 
+ifdef BASE_7_0
+
+DBDDEPENDS_FILES += testIOC.dbd$(DEP)
+testIOC_DBD = base.dbd pscCore.dbd
+TESTFILES += $(COMMON_DIR)/testIOC.dbd
+
+TESTPROD_HOST += testIOCUDP
+testIOCUDP_SRCS += testIOCUDP.cpp
+testIOCUDP_SRCS += testIOC_registerRecordDeviceDriver.cpp
+TESTS += testIOCUDP
+TESTFILES += testudp.db
+
+endif # BASE_7_0
 
 PROD_LIBS += pscCore
 PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
