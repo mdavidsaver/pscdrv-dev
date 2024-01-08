@@ -198,12 +198,11 @@ void dbuffer::consume(evbuffer *buf, size_t len)
     swap(temp);
 }
 
-template<typename B>
 struct dbuffer::stride_ptr {
-    B& buf;
+    const dbuffer& buf;
     size_t stride, off;
 
-    stride_ptr(B& buf) :buf(buf), stride(0u), off(0u) {}
+    stride_ptr(const dbuffer& buf) :buf(buf), stride(0u), off(0u) {}
 
     size_t copy(size_t n, void *dbase, bool out)
     {
@@ -254,7 +253,7 @@ struct dbuffer::stride_ptr {
 
 bool dbuffer::copyin(const void *buf, size_t offset, size_t len)
 {
-    stride_ptr<const dbuffer> ptr(*this);
+    stride_ptr ptr(*this);
     ptr.copy(offset, 0u, true); // skip
 
     return ptr.copy(len, const_cast<void*>(buf), false)==len;
@@ -275,7 +274,7 @@ size_t dbuffer::copyout_shape(void *rawdest, size_t offset, size_t esize, size_t
     if(actual>ecount)
         actual = ecount;
 
-    stride_ptr<const dbuffer> ptr(*this);
+    stride_ptr ptr(*this);
     ptr.copy(offset, 0u, true); // skip
 
     for(size_t e=0u; e<actual; e++) {

@@ -71,7 +71,6 @@ class epicsShareClass dbuffer
     std::vector<evbuffer_iovec> strides;
     std::vector<char> backingv;
     evbuffer* backingb;
-    template<typename B>
     struct stride_ptr;
 
     dbuffer(const dbuffer&);
