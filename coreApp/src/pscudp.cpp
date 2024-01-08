@@ -224,7 +224,7 @@ void PSCUDP::recvdata(short evt)
             }
             break;
 
-        } else if(evutil_sockaddr_cmp((sockaddr*)&addr, (sockaddr*)&ep, 1)!=0) {
+        } else if(evutil_sockaddr_cmp((sockaddr*)&addr, (sockaddr*)&ep, ep.sin_port!=0)!=0) {
             // Ignore packet from other than expected source address:port
             if(PSCDebug>4) {
                 char buf[40];
