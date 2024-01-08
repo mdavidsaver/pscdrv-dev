@@ -213,10 +213,10 @@ struct dbuffer::stride_ptr {
 
         while(n && stride<nstrides) {
             size_t avail = buf.strides[stride].iov_len - off;
+            size_t ncopy = std::min(n, avail);
 
             if(dest) {
                 char* src = off + (char*)buf.strides[stride].iov_base;
-                size_t ncopy = std::min(n, avail);
 
                 if(out) {
                     memcpy(dest, src, ncopy);
@@ -225,22 +225,18 @@ struct dbuffer::stride_ptr {
                 }
                 dest += ncopy;
             }
+            n -= ncopy;
+            avail -= ncopy;
+            nmoved += ncopy;
 
-            if(n >= avail) {
-                // advance to next stride
-                n -= avail;
-                nmoved += avail;
-                stride++;
-                off=0u;
-
-            } else if(valid()) {
+            if(avail) {
                 // satisfy from current stride
-                off+=n;
-                nmoved += n;
-                n=0u;
+                off += ncopy;
 
             } else {
-                // past end
+                // (maybe) advance to next stride
+                stride++;
+                off=0u;
             }
         }
         return nmoved;
@@ -260,30 +256,28 @@ bool dbuffer::copyin(const void *buf, size_t offset, size_t len)
     return ptr.copy(len, const_cast<void*>(buf), false)==len;
 }
 
-size_t dbuffer::copyout_shape(void *rawdest, size_t offset, size_t esize, size_t eskip, size_t ecount) const
+size_t dbuffer::copyout_shape(void *rawdest, size_t ioffset, size_t esize, size_t iskip, size_t dskip, size_t ecount) const
 {
     const size_t total = size();
 
-    if(ecount==0 || offset >= total)
+    if(ecount==0 || ioffset >= total)
         return 0u;
 
     char* dest = (char*)rawdest;
 
-    //size_t needed = offset + esize*ecount + eskip*(ecount-1u);
-    //       needed = offset + (esize + eskip)*ecount - eskip;
-    size_t actual = (total - offset + eskip)/(esize + eskip);
-    if(actual>ecount)
-        actual = ecount;
-
     stride_ptr ptr(*this);
-    ptr.copy(offset, 0u, true); // skip
+    ptr.copy(ioffset, 0u, true); // skip
 
-    for(size_t e=0u; e<actual; e++) {
+    size_t actual = 0u;
+    for(size_t e=0u; e<ecount; e++) {
         size_t ncopied = ptr.copy(esize, dest, true);
-        dest += ncopied;
+        if(ncopied!=esize)
+            break;
+        dest += ncopied + dskip;
+        actual++;
 
-        if(e < actual-1u)
-            ptr.copy(eskip, 0, true); // skip
+        if(iskip && iskip!=ptr.copy(iskip, 0, true)) // skip
+            break;
     }
 
     return actual;

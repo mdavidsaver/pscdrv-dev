@@ -76,7 +76,7 @@ long read_si(stringinRecord* prec)
             prec->val[0]='\0';
         } else {
             len -= priv->offset;
-            priv->block->data.copyout_shape(prec->val, priv->offset, len, 0u, 1u);
+            priv->block->data.copyout_shape(prec->val, priv->offset, len, 0u, 0u, 1u);
             prec->val[len]='\0';
         }
 

@@ -142,7 +142,7 @@ void test_dbuffer_contig()
         const char expect[] = {3,4, 7,8, 11,12};
         char out[10];
         memset(out, 0xfe, sizeof(out));
-        testOk1(B.copyout_shape(out, 2, 2, 2, 5)==3);
+        testOk1(B.copyout_shape(out, 2, 2, 2, 0u, 5)==3);
 
         testOk1(memcmp(expect, out, sizeof(expect))==0);
     }
@@ -188,7 +188,16 @@ void test_dbuffer_discontrig()
         const char expect[] = {3,4, 7,8, 11,12, 15,16};
         char out[16];
         memset(out, 0xfe, sizeof(out));
-        testOk1(B.copyout_shape(out, 2, 2, 2, sizeof(out)/2u)==4);
+        testOk1(B.copyout_shape(out, 2, 2, 2, 0, sizeof(out)/2u)==4);
+
+        testOk1(memcmp(expect, out, sizeof(expect))==0);
+    }
+
+    {
+        const unsigned char expect[] = {0xfe,5,6,7, 0xfe,11,12,13};
+        char unsigned out[16];
+        memset(out, 0xfe, sizeof(out));
+        testOk1(B.copyout_shape(out+1, 4, 3, 3, 1, sizeof(out)/4u)==2);
 
         testOk1(memcmp(expect, out, sizeof(expect))==0);
     }
@@ -197,7 +206,7 @@ void test_dbuffer_discontrig()
 } // namespace
 
 MAIN(testValues) {
-    testPlan(43);
+    testPlan(45);
     test_bswap();
     test_EGU2Raw();
     test_Raw2EGU();

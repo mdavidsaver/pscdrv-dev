@@ -112,7 +112,7 @@ void setRecTimestamp(Priv *priv)
 
     if(priv->timeFromBlock &&
             priv->block &&
-            priv->block->data.copyout_shape(raw.bytes, priv->tsoffset, sizeof(raw.bytes), 0u, 1u)==1
+            priv->block->data.copyout_shape(raw.bytes, priv->tsoffset, sizeof(raw.bytes), 0u, 0u, 1u)==1
         )
     {
         epicsTimeStamp ts;

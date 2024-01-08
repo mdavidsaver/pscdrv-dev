@@ -110,18 +110,19 @@ public:
     bool copyin(const void *buf, size_t offset, size_t len);
 
     bool copyout(void *dest, size_t offset, size_t nbytes) const {
-        return copyout_shape(dest, offset, nbytes, 0u, 1u)==1u;
+        return copyout_shape(dest, offset, nbytes, 0u, 0u, 1u)==1u;
     }
     /** Copy out array.
      *
      * @param dest Output pointer
-     * @param offset In bytes into this buffer
+     * @param ioffset In bytes into this buffer
      * @param esize size of dest[] elements
-     * @param eskip bytes to skip between elements
+     * @param iskip Input bytes to skip after each element
+     * @param dskip Output bytes to skip after each element
      * @param ecount Number of elements to copy
-     * @returns Number of elements copied
+     * @returns Number of complete elements copied.
      */
-    size_t copyout_shape(void *dest, size_t offset, size_t esize, size_t eskip, size_t ecount) const;
+    size_t copyout_shape(void *dest, size_t ioffset, size_t esize, size_t iskip, size_t dskip, size_t ecount) const;
 
     void copyout(evbuffer* dest) const;
 };
