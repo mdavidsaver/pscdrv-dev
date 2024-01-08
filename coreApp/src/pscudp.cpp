@@ -151,6 +151,8 @@ void PSCUDP::senddata(short evt)
                 message = "Tx socket error: ";
                 message += evutil_socket_error_to_string(EVUTIL_SOCKET_ERROR());
                 scanme = true;
+                // treat as unrecoverable.  (eg. bad address)
+                txbuf.clear();
             }
             break;
 
