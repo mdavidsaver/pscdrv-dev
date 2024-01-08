@@ -204,6 +204,7 @@ struct dbuffer::stride_ptr {
 
     stride_ptr(const dbuffer& buf) :buf(buf), stride(0u), off(0u) {}
 
+    // copy in/out bytes
     size_t copy(size_t n, void *dbase, bool out)
     {
         size_t nmoved = 0u;

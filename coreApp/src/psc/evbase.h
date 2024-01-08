@@ -65,7 +65,7 @@ private:
 };
 
 
-//! Dis-contiguous byte buffer
+//! Dis-contiguous byte buffer.  Backed by either an evbuffer or vector<char>
 class epicsShareClass dbuffer
 {
     std::vector<evbuffer_iovec> strides;
@@ -101,12 +101,26 @@ public:
     // move contents in.  Removes 'len' bytes from input evbuffer
     void consume(evbuffer *buf, size_t len=(size_t)-1);
 
+    /** Copy bytes in
+     * @param buf Input pointer
+     * @param offset In bytes into this buffer
+     * @param len In bytes to copy
+     * @return true on success
+     */
     bool copyin(const void *buf, size_t offset, size_t len);
 
     bool copyout(void *dest, size_t offset, size_t nbytes) const {
         return copyout_shape(dest, offset, nbytes, 0u, 1u)==1u;
     }
-    // returns number of elements copied
+    /** Copy out array.
+     *
+     * @param dest Output pointer
+     * @param offset In bytes into this buffer
+     * @param esize size of dest[] elements
+     * @param eskip bytes to skip between elements
+     * @param ecount Number of elements to copy
+     * @returns Number of elements copied
+     */
     size_t copyout_shape(void *dest, size_t offset, size_t esize, size_t eskip, size_t ecount) const;
 
     void copyout(evbuffer* dest) const;
