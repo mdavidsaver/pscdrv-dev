@@ -356,6 +356,13 @@ void UDPFast::rxfn() {
                         epicsAtomicIncrSizeT(&ntimeout);
                         if(PSCDebug>=2)
                             errlogPrintf("%s : recvmmsg() timeout\n", name.c_str());
+                        /*
+                         * Send a (re)subscribe message.
+                         * Backwards compatible, I think since existing servers don't receive anything from the UDP socket.
+                         */
+                        if(::sendto(sock, "SUBSCRIBE", 10, 0, (struct sockaddr *)&peer, sizeof(peer))<0) {
+                            printf("SUBSCRIBE ERRNO:%d\n", errno);
+                        }
 
                     } else {
                         if(PSCDebug>=0)
