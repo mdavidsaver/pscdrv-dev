@@ -33,6 +33,7 @@ pscUDPFast_SRCS += empty.c
 pscUDPFast_dbd = ../pscUDPFast-dummy.dbd
 endif
 
+pscUDPFast_LIBS += pscCore
 pscUDPFast_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #===========================
