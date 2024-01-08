@@ -5,6 +5,8 @@
 * in file LICENSE that is included with this distribution.
 \*************************************************************************/
 
+#include <limits>
+
 #include <stdio.h>
 #include <arpa/inet.h>
 
@@ -66,12 +68,34 @@ long get_iointr_info(int cmd, dbCommon *prec, IOSCANPVT *io)
     return 0;
 }
 
-template<typename T>
+namespace {
+template<size_t N> struct Int;
+template<> struct Int<1u> { typedef epicsUInt8 type; };
+template<> struct Int<2u> { typedef epicsUInt16 type; };
+template<> struct Int<4u> { typedef epicsUInt32 type; };
+template<> struct Int<8u> { typedef epicsUInt64 type; };
+} // namespace
+
+template<typename T, size_t I=sizeof(T)>
 long read_wf_real(waveformRecord* prec)
 {
+    STATIC_ASSERT(I>0 && I<=sizeof(T));
+    typedef typename detail::nswap<sizeof(T)>::utype store_type;
+
     if(!prec->dpvt)
         return -1;
     Priv *priv=(Priv*)prec->dpvt;
+
+    // block buffer step size in bytes, default to element size
+    const size_t istep = priv->step!=0 ? priv->step : I;
+    const size_t iskip = istep>=I ? istep-I : 0u;
+    // non-zero when widening integer
+    const size_t oskip = sizeof(T)-I;
+
+    store_type sign_mask = store_type(1u)<<(8u*I-1);
+    store_type extend = 0;
+    if(oskip)
+        extend = std::numeric_limits<store_type>::max()<<(8u*I);
 
     try {
         Guard g(priv->psc->lock);
@@ -81,19 +105,23 @@ long read_wf_real(waveformRecord* prec)
             return 0;
         }
 
-        // source step size in bytes, default to element size
-        const size_t step = priv->step!=0 ? priv->step : sizeof(T);
-        const size_t skip = step>=sizeof(T) ? step-sizeof(T) : 0u;
+        store_type* out = (store_type*)prec->bptr;
 
         // HACK: we are copying integers into a double[]
         // this is safe so long as sizeof(T)<=sizeof(double)
-        size_t nelem = priv->block->data.copyout_shape(prec->bptr, priv->offset, sizeof(T), skip, 0u, prec->nelm);
+        size_t nelem = priv->block->data.copyout_shape(oskip+(char*)out, priv->offset, I, iskip, oskip, prec->nelm);
 
         // step backwards since we are expanding the used size of the array
         for(size_t i=nelem; i; i--) {
-            T raw = ((T*)prec->bptr)[i-1u];
+            store_type raw = ntoh(out[i-1u]);
+            if(oskip) {
+                if(raw & sign_mask)
+                    raw |= extend;
+                else
+                    raw &= ~extend;
+            }
 
-            ((double*)prec->bptr)[i-1u] = ntoh(raw);
+            ((double*)prec->bptr)[i-1u] = T(raw);
         }
 
         prec->nord = nelem;
@@ -185,6 +213,8 @@ MAKEDSET(waveform, devPSCBlockOutWf8, &init_wf_record_bytes<1>, &get_iointr_info
 MAKEDSET(waveform, devPSCBlockInWf16, &init_wf_record<0>, &get_iointr_info, &read_wf_real<epicsInt16>);
 MAKEDSET(waveform, devPSCBlockOutWf16, &init_wf_record<1>, &get_iointr_info, &write_wf<epicsInt16>);
 
+static dset6<waveformRecord> devPSCBlockInWf24 = {{6, NULL, NULL, &init_wf_record<0>, &get_iointr_info}, &read_wf_real<epicsInt32, 3u>, NULL};
+
 MAKEDSET(waveform, devPSCBlockInWf32, &init_wf_record<0>, &get_iointr_info, &read_wf_real<epicsInt32>);
 MAKEDSET(waveform, devPSCBlockOutWf32, &init_wf_record<1>, &get_iointr_info, &write_wf<epicsInt32>);
 
@@ -202,6 +232,7 @@ epicsExportAddress(dset, devPSCBlockInWf8);
 epicsExportAddress(dset, devPSCBlockOutWf8);
 epicsExportAddress(dset, devPSCBlockInWf16);
 epicsExportAddress(dset, devPSCBlockOutWf16);
+epicsExportAddress(dset, devPSCBlockInWf24);
 epicsExportAddress(dset, devPSCBlockInWf32);
 epicsExportAddress(dset, devPSCBlockOutWf32);
 epicsExportAddress(dset, devPSCBlockInWfF32);

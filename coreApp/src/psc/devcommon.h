@@ -133,18 +133,22 @@ namespace detail {
     template<int L> struct nswap {};
     template<> struct nswap<1> {
         typedef epicsInt8 type;
+        typedef epicsUInt8 utype;
         static type op(type in) {return in;}
     };
     template<> struct nswap<2> {
         typedef epicsInt16 type;
+        typedef epicsUInt16 utype;
         static type op(type in) {return htons(in);}
     };
     template<> struct nswap<4> {
         typedef epicsInt32 type;
+        typedef epicsUInt32 utype;
         static type op(type in) {return htonl(in);}
     };
     template<> struct nswap<8> {
-        typedef int64_t type;
+        typedef epicsInt64 type;
+        typedef epicsUInt64 utype;
         static type op(type in) {
             epicsUInt32 h = in>>32,
                         l = in;
