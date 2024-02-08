@@ -229,6 +229,8 @@ UDPFast::UDPFast(const std::string& name,
         if(getsockname(sock, &self.sa, &len))
             throw std::runtime_error("Unable to getsockname()");
     }
+
+    scanIoInit(&shortFull);
 }
 
 UDPFast::~UDPFast()
@@ -716,6 +718,11 @@ void UDPFast::cachefn()
                     std::swap_ranges(shortBuf.begin()+istart,
                                      shortBuf.end(),
                                      inprog.begin());
+
+                    if(shortBuf.size() >= shortLimit) {
+                        // short filled.
+                        scanIoRequest(shortFull);
+                    }
                 }
             }
 

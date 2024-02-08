@@ -82,6 +82,24 @@ long devudp_init_record_in(REC *prec)
 
 #define TRY if(!prec->dpvt) return -1; UDPFast *dev = (UDPFast*)prec->dpvt; (void)dev; try
 
+long devudp_short_full_get_iointr(int detach, dbCommon *prec, IOSCANPVT* pscan)
+{
+    TRY {
+        (void)detach;
+        *pscan = dev->shortFull;
+        return 0;
+    }CATCH(devudp_short_full_get_iointr, prec);
+}
+
+long devudp_get_shortFull(biRecord* prec)
+{
+    TRY {
+        Guard G(dev->shortLock);
+        prec->rval = dev->shortBuf.size() >= dev->shortLimit;
+        return 0;
+    }CATCH(devudp_get_shortFull, prec);
+}
+
 template<std::string UDPFast::*STR>
 long devudp_set_string(lsoRecord* prec)
 {
@@ -251,6 +269,7 @@ long devudp_clear_shortbuf(longinRecord *prec)
         if(unstall)
             dev->vpoolStall.signal();
         prec->val += (epicsInt32)temp.size();
+        scanIoRequest(dev->shortFull);
         return 0;
 
     }CATCH(devudp_clear_shortbuf, prec);
@@ -429,6 +448,8 @@ long devudp_read_shortbuf_I24_packed(aaiRecord* prec)
 
 #undef TRY
 
+MAKEDSET(bi, devPSCUDPShortFullBI, &devudp_init_record_in, &devudp_short_full_get_iointr,
+         &devudp_get_shortFull);
 MAKEDSET(ai, devPSCUDPIntervalAI, &devudp_init_record_period, 0, &devudp_interval);
 MAKEDSET(lso, devPSCUDPFilebaseLSO, &devudp_init_record_out, 0, &devudp_set_string<&UDPFast::filebase>);
 MAKEDSET(lso, devPSCUDPFiledirLSO, &devudp_init_record_out, 0, &devudp_set_string<&UDPFast::filedir>);
@@ -456,6 +477,7 @@ MAKEDSET(aai, devPSCUDPShortGetI24AAI, &devudp_init_record_shortbuf, 0, &devudp_
 }
 
 extern "C" {
+epicsExportAddress(dset, devPSCUDPShortFullBI);
 epicsExportAddress(dset, devPSCUDPIntervalAI);
 epicsExportAddress(dset, devPSCUDPFilebaseLSO);
 epicsExportAddress(dset, devPSCUDPFiledirLSO);

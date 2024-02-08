@@ -7,6 +7,7 @@ variable(PSCUDPMaxLenMB, double)
 variable(PSCUDPSetSockBuf, int)
 variable(PSCUDPDSyncSizeMB, int)
 
+device(bi, INST_IO, devPSCUDPShortFullBI, "PSCUDPFast shortFull")
 device(ai, INST_IO, devPSCUDPIntervalAI, "PSCUDPFast interval")
 device(lso, INST_IO, devPSCUDPFilebaseLSO, "PSCUDPFast filebase")
 device(lso, INST_IO, devPSCUDPFiledirLSO, "PSCUDPFast directory")
