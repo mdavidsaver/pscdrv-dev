@@ -13,6 +13,7 @@
 #include <boRecord.h>
 #include <biRecord.h>
 #include <aiRecord.h>
+#include <longoutRecord.h>
 #include <longinRecord.h>
 #include <int64inRecord.h>
 #include <aaiRecord.h>
@@ -132,6 +133,17 @@ long devudp_get_record(biRecord* prec)
     }CATCH(devudp_get_record, prec);
 }
 
+long devudp_set_shortLimit(longoutRecord *prec)
+{
+    TRY {
+        Guard G(dev->lock);
+        if(prec->val>=0)
+            dev->shortLimit = prec->val;
+        prec->val = dev->shortLimit;
+        return 0;
+    }CATCH(devudp_get_record, prec);
+}
+
 template<const std::string UDPFast::*STR>
 long devudp_get_string(lsiRecord* prec)
 {
@@ -214,6 +226,7 @@ struct privShortBuf {
     UDPFast *psc;
     unsigned int block;
     long offset;
+    long step;
 };
 
 long devudp_clear_shortbuf(longinRecord *prec)
@@ -255,10 +268,13 @@ long devudp_init_record_shortbuf(R* prec)
         std::string name;
         unsigned int block;
         long offset = 0;
+        long step = 0;
 
         strm >> name >> block;
         if(!strm.eof())
             strm >> offset;
+        if(!strm.eof())
+            strm >> step;
 
         if(strm.fail()) {
             timefprintf(stderr, "%s: Error Parsing: '%s'\n",
@@ -273,6 +289,7 @@ long devudp_init_record_shortbuf(R* prec)
         priv->psc = PSC::getPSC<UDPFast>(name);
         priv->block = block;
         priv->offset = offset;
+        priv->step = step;
 
         prec->dpvt = (void*)priv.release();
         return 0;
@@ -280,7 +297,7 @@ long devudp_init_record_shortbuf(R* prec)
     }CATCH(devudp_init_record_shortbuf, prec);
 }
 
-long devudp_read_shortbuf(aaiRecord* prec)
+long devudp_read_shortbuf_U32(aaiRecord* prec)
 {
     if(prec->ftvl!=menuFtypeULONG) {
         (void)recGblSetSevr(prec, STATE_ALARM, INVALID_ALARM);
@@ -342,7 +359,72 @@ long devudp_read_shortbuf(aaiRecord* prec)
         prec->nord = epicsUInt32(N);
         return 0;
 
-    }CATCH(devudp_read_shortbuf, prec);
+    }CATCH(devudp_read_shortbuf_U32, prec);
+}
+
+long devudp_read_shortbuf_I24_packed(aaiRecord* prec)
+{
+    if(prec->ftvl!=menuFtypeLONG) {
+        (void)recGblSetSevr(prec, STATE_ALARM, INVALID_ALARM);
+        return 0;
+    }
+
+    TRY {
+        Guard S(priv->psc->shortLock);
+
+        if(!priv->psc->isConnected()) {
+            (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+        }
+
+        size_t Iout = 0u;
+        size_t Nout = size_t(prec->nelm);
+        epicsInt32* out = static_cast<epicsInt32*>(prec->bptr);
+
+        // loop through available packets
+        size_t skips = 0u;
+        for(size_t i=0u, N=priv->psc->shortBuf.size(); i<N && Iout<Nout; i++) {
+            const UDPFast::pkt& pkt = priv->psc->shortBuf[i];
+            if(pkt.msgid != priv->block) {
+                skips++;
+                continue;
+            }
+
+            size_t pos = priv->offset;
+            size_t step = priv->step;
+            size_t limit = std::min(pkt.bodylen, pkt.body.size());
+
+            // loop through samples in a packet
+            while(pos+3u <= limit && Iout<Nout) {
+                union {
+                    epicsUInt32 I;
+                    char B[4];
+                } pun;
+                memcpy(&pun.B[1], &pkt.body[pos], 3u);
+                // sign extend...
+                // B[0] = 0xff if B[1]&0x80 else 0x00
+                pun.B[0] = pun.B[1]&0x80;
+                pun.B[0] |= pun.B[0]>>1u;
+                pun.B[0] |= pun.B[0]>>2u;
+                pun.B[0] |= pun.B[0]>>4u;
+
+                out[Iout++] = ntohl(pun.I);
+
+                pos += step;
+            }
+        }
+
+        prec->nord = Iout;
+
+        if(priv->psc->shortBuf.size() >= priv->psc->shortLimit && Iout < Nout && !skips) {
+            // short buf. filled, but this record had space remaining.
+            // increase short buf limit for the next iteration.
+            // iff no other packet t
+            priv->psc->shortLimit++;
+
+        }
+
+        return 0;
+    }CATCH(devudp_read_shortbuf_I24, prec);
 }
 
 #undef TRY
@@ -353,6 +435,7 @@ MAKEDSET(lso, devPSCUDPFiledirLSO, &devudp_init_record_out, 0, &devudp_set_strin
 MAKEDSET(bo, devPSCUDPReopenBO, &devudp_init_record_out, 0, &devudp_reopen);
 MAKEDSET(bo, devPSCUDPRecordBO, &devudp_init_record_out, 0, &devudp_set_record);
 MAKEDSET(bi, devPSCUDPRecordBI, &devudp_init_record_in, 0, &devudp_get_record);
+MAKEDSET(longout, devPSCUDPShortLimitLO, &devudp_init_record_out, 0, &devudp_set_shortLimit);
 MAKEDSET(lsi, devPSCUDPFilenameLSI, &devudp_init_record_in, 0, &devudp_get_string<&UDPFast::lastfile>);
 MAKEDSET(lsi, devPSCUDPErrorLSI, &devudp_init_record_in, 0, &devudp_get_string<&UDPFast::lasterror>);
 MAKEDSET(ai, devPSCUDPvpoolAI, &devudp_init_record_in, 0, &devudp_get_vpool);
@@ -367,7 +450,8 @@ MAKEDSET(int64in, devPSCUDPnrxI64I, &devudp_init_record_in, 0, &devudp_get_count
 MAKEDSET(int64in, devPSCUDPntimeoutI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::ntimeout>);
 MAKEDSET(int64in, devPSCUDPnoomI64I, &devudp_init_record_in, 0, &devudp_get_counter<&UDPFast::noom>);
 MAKEDSET(longin, devPSCUDPShortClearLI, &devudp_init_record_in, 0, &devudp_clear_shortbuf);
-MAKEDSET(aai, devPSCUDPShortGetAAI, &devudp_init_record_shortbuf, 0, &devudp_read_shortbuf);
+MAKEDSET(aai, devPSCUDPShortGetAAI, &devudp_init_record_shortbuf, 0, &devudp_read_shortbuf_U32);
+MAKEDSET(aai, devPSCUDPShortGetI24AAI, &devudp_init_record_shortbuf, 0, &devudp_read_shortbuf_I24_packed);
 
 }
 
@@ -378,6 +462,7 @@ epicsExportAddress(dset, devPSCUDPFiledirLSO);
 epicsExportAddress(dset, devPSCUDPReopenBO);
 epicsExportAddress(dset, devPSCUDPRecordBO);
 epicsExportAddress(dset, devPSCUDPRecordBI);
+epicsExportAddress(dset, devPSCUDPShortLimitLO);
 epicsExportAddress(dset, devPSCUDPFilenameLSI);
 epicsExportAddress(dset, devPSCUDPErrorLSI);
 epicsExportAddress(dset, devPSCUDPvpoolAI);
@@ -393,4 +478,5 @@ epicsExportAddress(dset, devPSCUDPntimeoutI64I);
 epicsExportAddress(dset, devPSCUDPnoomI64I);
 epicsExportAddress(dset, devPSCUDPShortClearLI);
 epicsExportAddress(dset, devPSCUDPShortGetAAI);
+epicsExportAddress(dset, devPSCUDPShortGetI24AAI);
 }
