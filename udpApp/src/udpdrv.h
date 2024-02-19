@@ -66,7 +66,7 @@ struct UDPFast : public PSCBase
     bool reopen;
     bool record;
 
-    epicsMutex shortLock;
+    mutable epicsMutex shortLock;
     pkts_t shortBuf;
     size_t shortLimit;
     IOSCANPVT shortFull;

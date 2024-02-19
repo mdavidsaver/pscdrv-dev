@@ -808,11 +808,22 @@ bool report1(int lvl, const PSCBase* base)
 
     size_t vpoolCnt, pendingCnt;
     if(lvl>0) {
-        Guard G(drv->rxLock);
-        vpoolCnt = drv->vpool.size();
-        pendingCnt = drv->pending.size();
+        {
+            Guard G(drv->rxLock);
+            vpoolCnt = drv->vpool.size();
+            pendingCnt = drv->pending.size();
+        }
+        printf("  vpool#=%zu pending#=%zu\n", vpoolCnt, pendingCnt);
     }
-    printf("  vpool#=%zu pending#=%zu\n", vpoolCnt, pendingCnt);
+    if(lvl>0) {
+        size_t shortLen, shortLimit;
+        {
+            Guard G(drv->shortLock);
+            shortLen = drv->shortBuf.size();
+            shortLimit = drv->shortLimit;
+        }
+        printf("  short %zu/%zu\n", shortLen, shortLimit);
+    }
 
     return true;
 }
