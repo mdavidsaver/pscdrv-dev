@@ -141,6 +141,15 @@ void PSCBase::startAll()
 
 void PSCBase::stopAll()
 {
+    pscmap_t::const_iterator it, end=pscmap.end();
+    for(it=pscmap.begin(); it!=end; ++it) {
+        Guard g(it->second->lock);
+        it->second->stop();
+    }
+}
+
+void PSCBase::destroyAll()
+{
     pscmap_t trash;
 #if __cplusplus>=201103L
     trash = std::move(pscmap);
@@ -150,7 +159,6 @@ void PSCBase::stopAll()
     while(!trash.empty()) {
         PSCBase* psc = trash.begin()->second;
         trash.erase(trash.begin());
-        psc->stop();
         delete psc;
     }
 }
@@ -230,17 +238,25 @@ void setPSCSendBlockSize(const char* name, int bid, int size)
     }
 }
 
-static void PSCAtExit(void*)
+static void PSCAtExitStop(void*)
 {
     PSCBase::stopAll();
 }
 
+static void PSCAtExitDestroy(void*)
+{
+    PSCBase::destroyAll();
+}
+
 static void PSCHook(initHookState state)
 {
-    if(state!=initHookAfterIocRunning)
-        return;
-    epicsAtExit(PSCAtExit, 0);
-    PSCBase::startAll();
+    if(state==initHookAtIocBuild) {
+        epicsAtExit(PSCAtExitDestroy, 0); // will run after iocShutdown()
+
+    } else if(state==initHookAfterIocRunning) {
+        epicsAtExit(PSCAtExitStop, 0); // will run before iocShutdown()
+        PSCBase::startAll();
+    }
 }
 
 static

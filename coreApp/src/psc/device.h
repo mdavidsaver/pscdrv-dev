@@ -173,6 +173,7 @@ protected:
 public:
     static void startAll();
     static void stopAll();
+    static void destroyAll();
     static PSCBase* getPSCBase(const std::string&);
     template<typename T>
     static T* getPSC(const std::string& n)
