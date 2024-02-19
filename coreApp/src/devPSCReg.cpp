@@ -124,8 +124,9 @@ void read_to_field(dbCommon *prec, Priv *priv, T* pfield)
     if(priv->offset > priv->block->data.size()
             || priv->block->data.copyout(pfield, priv->offset, sizeof(T))!=1)
     {
-        timeprintf("%s: offset %d does not fit in block of size %d\n",
-               prec->name, (int)priv->offset, (int)priv->block->data.size());
+        if(prec->tpro)
+            timeprintf("%s: offset %d does not fit in block of size %d\n",
+                       prec->name, (int)priv->offset, (int)priv->block->data.size());
         throw recAlarm(SOFT_ALARM, INVALID_ALARM);
     }
 
