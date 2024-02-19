@@ -109,17 +109,25 @@ unsigned short PSCUDP::bound_port() const {
 
 void PSCUDP::connect()
 {
+    Guard G(lock);
+
     timeval timeout = {5,0};
     if(event_add(evt_rx, &timeout))
         throw std::runtime_error("Failed to add Rx event");
 
     connected = true; // UDP socket is always "connected"
     scanIoRequest(onConnect);
-    for(size_t i=0, N=procOnConnect.size(); i<N; i++) {
-        dbCommon *prec = procOnConnect[i];
-        dbScanLock(prec);
-        dbProcess(prec);
-        dbScanUnlock(prec);
+    {
+        std::vector<dbCommon*> scan(procOnConnect); // copy
+
+        UnGuard U(G);
+
+        for(size_t i=0, N=scan.size(); i<N; i++) {
+            dbCommon *prec = scan[i];
+            dbScanLock(prec);
+            dbProcess(prec);
+            dbScanUnlock(prec);
+        }
     }
 
     if(PSCDebug>4)

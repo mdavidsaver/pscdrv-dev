@@ -94,6 +94,8 @@ void PSC::forceReConnect()
 /* start a new connection */
 void PSC::connect()
 {
+    Guard G(lock);
+
     assert(!connected);
     assert(!session);
     assert(!timer_active);

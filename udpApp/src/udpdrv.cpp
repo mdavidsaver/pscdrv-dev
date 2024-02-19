@@ -741,14 +741,20 @@ void UDPFast::cachefn()
 
 void UDPFast::connect()
 {
-    connected = true;
+    {
+        Guard G(lock);
+        connected = true;
+    }
     rxworker.start();
     cacheworker.start();
 }
 
 void UDPFast::stop()
 {
-    connected = false;
+    {
+        Guard G(lock);
+        connected = false;
+    }
     epics::atomic::set(running, 0);
     {
         // send a zero length packet to myself to wake rxworker

@@ -134,7 +134,6 @@ void PSCBase::startAll()
 {
     pscmap_t::const_iterator it, end=pscmap.end();
     for(it=pscmap.begin(); it!=end; ++it) {
-        Guard g(it->second->lock);
         it->second->connect();
     }
 }
@@ -143,7 +142,6 @@ void PSCBase::stopAll()
 {
     pscmap_t::const_iterator it, end=pscmap.end();
     for(it=pscmap.begin(); it!=end; ++it) {
-        Guard g(it->second->lock);
         it->second->stop();
     }
 }
