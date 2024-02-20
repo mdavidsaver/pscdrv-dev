@@ -8,6 +8,8 @@ import struct
 
 from math import pi, sin
 
+import numpy as np
+
 def logcb(fn):
     def wrapper(*args, **kws):
         try:
@@ -77,7 +79,11 @@ class ControlProtocol(PSCUDP):
                 self.core.chan_mask = val
 
             elif reg==20: # Downsample
-                _log.info('Set decimate %08x', val)
+                if val not in (1, 5, 25, 250):
+                    _log.error('Ignore invalid decimatation factor %u', val)
+                else:
+                    _log.info('Set decimate %u', val)
+                    self.core.rate = 250e3/val
 
             elif reg==21: # filter?
                 pass
@@ -109,7 +115,7 @@ class DataProtocol(PSCUDP):
         self.core.set_stream(src)
 
 class DAQCore:
-    period: float = 0.1
+    period: float = 1.0
     stream_timeout = 10.0
     data_tr: asyncio.DatagramTransport
 
@@ -123,6 +129,7 @@ class DAQCore:
         self.acq = False
         self.seq = 0
         self.pha = 0.0
+        self.rate = 250e3
         self.chan_mask = 0xffffffff # TODO: bug Eric about unsync'd default...
 
         self.tick_timer = self.loop.call_later(self.period, self.tick)
@@ -136,45 +143,58 @@ class DAQCore:
         "advance simulation"
         self.tick_timer = self.loop.call_later(self.period, self.tick)
 
+        if not self.acq or self.dest is None:
+            return
+
         now = self.loop.time()
-        sec, ns = divmod(now, 1.0)
-        ns *= 1e9
-        sec, ns = int(sec), int(ns)
 
-        self.seq = (self.seq+1)&0xFfffFfffFfffFfff
+        Fsim = np.asarray([
+            100, 100, 100, 100,
+            100, 100, 100, 100,
+            1000, 1000, 1000, 1000,
+            1000, 1000, 1000, 1000,
+            10e3, 10e3, 10e3, 10e3,
+            10e3, 10e3, 10e3, 10e3,
+            100e3, 100e3, 100e3, 100e3,
+            100e3, 100e3, 100e3, 100e3,
+        ])
+        assert Fsim.shape==(32,), Fsim.shape
 
-        if self.acq and self.dest is not None:
-            pkt = [
-                _stream_head.pack(
-                    0, # status
-                    self.chan_mask,
-                    self.seq,
-                    sec,
-                    ns,
-                ),
-            ]
+        # output samples per period
+        Ntot = int(self.rate * self.period)
+        T = np.arange(Ntot) / self.rate # sec
+        T = T[:,None].repeat(32, 1) # [#samp, #chan]
+        spread = np.linspace(0, 31/16*pi, num=32)[None,:].repeat(T.shape[0], 0)
+        Fsim = Fsim[None, :].repeat(T.shape[0], 0)
+        S = 0x7fffff * np.sin(self.pha + 2*pi*Fsim*T + spread)
+        self.pha += 2*pi/Fsim*Ntot
 
-            for n in range(480//32):
-                for ch in range(32):
-                    if self.chan_mask & (1<<ch):
-                        # spread 32 channels around phase
-                        V = sin(self.pha + ch/16*pi)
+        # apply channel mask
+        mask = [b=='1' for b in f'{self.chan_mask:032b}']
+        S = S[:,mask]
 
-                        V = int(V * 0x7fffff) # scale [-1.0, 1.0) to 24-bit signed range
+        # packetize
+        samp_per_pkt = 480//32 # TODO: properly support partial channel mask...
+        for i in range(0, Ntot, samp_per_pkt):
+            sec, ns = divmod(now + T[i,0], 1.0)
+            ns *= 1e9
+            sec, ns = int(sec), int(ns)
 
-                        pkt.append(_int32.pack(V)[1:]) # truncate to 3 bytes
-                        assert len(pkt[-1])==3, pkt[-1]
+            self.seq = (self.seq+1)&0xFfffFfffFfffFfff
 
-                self.pha += 2*pi/100
+            body: bytes = _stream_head.pack(
+                0, # status
+                self.chan_mask,
+                self.seq,
+                sec,
+                ns,
+            ) + bytes(S[i:i+samp_per_pkt, :].astype('>i4').flatten().view('u1').reshape((-1,4))[:,1:4].flatten())
 
-            assert len(pkt)<=481, len(pkt)
-            pkt = b''.join(pkt)
-            assert len(pkt) <= 1464, (len(pkt), pkt[:40])
-            pkt = _head.pack(b'PS', 20033, len(pkt)) + pkt
+            assert len(body) <= 1464, (len(body), body[:40])
+            pkt = _head.pack(b'PS', 20033, len(body)) + body
 
-            _log.debug('Stream %s <- %r', self.dest, pkt[:20])
+            #_log.debug('Stream %s <- %r', self.dest, pkt[:20])
             self.data_tr.sendto(pkt, self.dest)
-
 
     def _stream_timeout(self):
         _log.warn("Stream timeout %s", self.dest)
