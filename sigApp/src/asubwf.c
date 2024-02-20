@@ -156,4 +156,37 @@ long wf_stats(aSubRecord* prec)
     return 0;
 }
 
+/* Waveform timebase
+ *
+ * record(aSub, "$(N)") {
+ *  field(SNAM, "wf_timebase")
+ *  field(FTA , "ULONG")
+ *  field(FTB , "DOUBLE")
+ *  field(FTVA ,"DOUBLE")
+ *  field(NOVA , "128")
+ *  field(INPA, "Element count")
+ *  field(INPB, "Sample period")
+ *  field(OUTA, "Time array")
+ */
+static
+long wf_timebase(aSubRecord *prec)
+{
+    epicsUInt32 count = *(epicsUInt32*)prec->a;
+    double period = *(double*)prec->b;
+    double *out = (double*)prec->vala;
+    epicsUInt32 outLim = prec->nova;
+
+    if(count > outLim)
+        count = outLim;
+
+    double t = 0.0;
+    for(epicsUInt32 i=0; i<count; i++, t+=period)
+        out[i] = t;
+
+    prec->neva = count;
+
+    return 0;
+}
+
 epicsRegisterFunction(wf_stats);
+epicsRegisterFunction(wf_timebase);

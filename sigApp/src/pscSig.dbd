@@ -17,6 +17,7 @@ registrar(fftcalcReg)
 
 # Basic stats
 function(wf_stats)
+function(wf_timebase)
 
 # debugging noise
 variable(PSCPSDDebug, int)
