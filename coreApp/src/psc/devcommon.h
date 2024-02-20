@@ -119,7 +119,7 @@ I analogEGU2Raw(R* prec, F v)
     return (I)v;
 }
 
-class RecInfo
+class PSC_API RecInfo
 {
     DBENTRY ent;
 public:
