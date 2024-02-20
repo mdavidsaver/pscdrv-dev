@@ -7,6 +7,7 @@
 # NELM - Max input array size (required)
 # START - Input link to determine stats window start
 # WIDTH - Input link to determine stats window size (defaults to NELM)
+# FLNK
 #
 
 record(aSub, "$(P)Stats-Calc_") {
@@ -33,6 +34,7 @@ record(aSub, "$(P)Stats-Calc_") {
   field(OUTD, "$(P)Max-I PP MS")
   field(OUTE, "$(P)Cnt-I PP MS")
   field(TSEL, "$(TSEL=)")
+  field(FLNK, "$(FLNK=)")
 }
 
 record(ai, "$(P)Mean-I") {
