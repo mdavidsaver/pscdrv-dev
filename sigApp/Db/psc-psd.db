@@ -78,12 +78,12 @@ record(bo, "$(P)Run-Sel") {
     field(ZNAM, "Run")
     field(ONAM, "Pause")
     field(PINI, "YES")
-    field(MASK, "1")
-    field(UDF , "0")
-    field(OUT , "$(P)In-SP.DISV NPP")
+    field(VAL , "0")
 }
 
 record(waveform, "$(P)In-SP") {
+    field(SDIS, "$(P)Run-Sel")
+    field(DISV, "1")
     field(DTYP, "PSC PSD input")
     field(INP , "$(INP=)")
     field(FTVL, "DOUBLE")
