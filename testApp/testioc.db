@@ -1,0 +1,11 @@
+
+record(stringout, "$(P)say") {
+    field(DTYP, "PSC Block")
+    field(OUT, "@dev 100")
+    field(FLNK, "tx:Send-Cmd")
+}
+record(stringin, "$(P)hear") {
+    field(DTYP, "PSC Block")
+    field(INP, "@dev 110") # test server echos 100 as 110
+    field(SCAN, "I/O Intr")
+}

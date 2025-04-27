@@ -19,6 +19,12 @@ DBDDEPENDS_FILES += testIOC.dbd$(DEP)
 testIOC_DBD = base.dbd pscCore.dbd
 TESTFILES += $(COMMON_DIR)/testIOC.dbd
 
+TESTPROD_HOST += testIOC
+testIOC_SRCS += testIOC.cpp
+testIOC_SRCS += testIOC_registerRecordDeviceDriver.cpp
+TESTS += testIOC
+TESTFILES += testioc.db
+
 TESTPROD_HOST += testIOCUDP
 testIOCUDP_SRCS += testIOCUDP.cpp
 testIOCUDP_SRCS += testIOC_registerRecordDeviceDriver.cpp
