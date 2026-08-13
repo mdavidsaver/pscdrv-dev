@@ -1,29 +1,12 @@
 
 # sim reading
 
-record(svectorin, "$(P)WF") {
+record(waveform, "$(P)WF") {
     field(DTYP, "PSC Block I32 In")
     field(INP , "@$(NAME) 0 12") # block zero, skip 12 bytes
     field(SCAN, "I/O Intr")
     field(FTVL, "DOUBLE")
     field(NELM, "1024")
-    field(TSE , "-2")
-    field(FLNK, "$(P)WF:STAT")
-    info("TimeFromBlock", "0") # time from device block0[0:7]
-    info("TagFromBlock", "8")  # utag from device block0[8:11]
-}
-
-record(statBin, "$(P)WF:STAT") {
-    field(INP , "$(P)WF NPP")
-    field(TSEL, "$(P)WF.TIME NPP")
-    field(FLNK, "$(P)CNT")
-    field(DEC , "16")
-}
-
-record(pvstructin, "$(P)WF2") {
-    field(DTYP, "PSC Block I32 In")
-    field(INP , "@$(NAME) 0 12") # block zero, skip 12 bytes
-    field(SCAN, "I/O Intr")
     field(TSE , "-2")
     field(FLNK, "$(P)CNT")
     info("TimeFromBlock", "0") # time from device block0[0:7]
